@@ -137,6 +137,19 @@ with tab2:
     top_schools["Total Donations"] = top_schools["Total Donations"].map("${:,.0f}".format)
     st.dataframe(top_schools, use_container_width=True, hide_index=True)
 
+    st.markdown("**Bar Chart:**")
+    top10_bar = px.bar(
+        top_schools,
+        x="School",
+        y="Total Donations",
+        title="Top 10 Universities by Total Foreign Donations",
+        color="Total Donations",
+        color_continuous_scale="Reds",
+        hover_data={"Total Donations": True}
+    )
+    top10_bar.update_layout(xaxis_tickangle=45)
+    st.plotly_chart(top10_bar, use_container_width=True)
+
     st.markdown("### 📊 Donation Breakdown by Country for Selected Schools (Ordered Table)")
 
     default_schools = [
@@ -165,7 +178,6 @@ with tab2:
 
     st.markdown("### 📊 Visual Breakdown of Foreign Donations to Selected Schools")
 
-    # Group by school and country for chart
     chart_data = (
         filtered_df[
             (filtered_df["School"].isin(chosen_schools)) &
@@ -191,29 +203,6 @@ with tab2:
 
 # === TAB 3: Donations by Country ===
 with tab3:
-    st.subheader("🏛️ Top 30 US Universities by Total Foreign Donations")
-
-    school_summary = (
-        filtered_df.groupby("School")["Amount"]
-        .sum()
-        .sort_values(ascending=False)
-        .head(30)
-        .reset_index()
-        .rename(columns={"Amount": "Total Donations"})
-    )
-
-    fig = px.bar(
-        school_summary,
-        x="School",
-        y="Total Donations",
-        color="Total Donations",
-        title="Top 30 Universities by Total Foreign Donations",
-        hover_data={"Total Donations": ":,.0f"},
-        color_continuous_scale="Reds"
-    )
-    fig.update_layout(xaxis_tickangle=45)
-    st.plotly_chart(fig, use_container_width=True)
-
     st.markdown("### 🌍 Total Foreign Donations by Country (Ordered Table)")
     country_table = (
         filtered_df.groupby("Country")["Amount"]
@@ -224,6 +213,13 @@ with tab3:
     )
     country_table["Total Donations"] = country_table["Total Donations"].map("${:,.0f}".format)
     st.dataframe(country_table, use_container_width=True, hide_index=True)
+
+    st.markdown("### 📌 Donation Types Explained")
+    st.markdown("""
+- **Gift**: A voluntary contribution with no expectation of direct return. Often used to support general or targeted academic initiatives.
+- **Restricted Gift**: A gift earmarked for a specific use—like a research center, scholarship fund, or endowed chair.
+- **Contract**: A legally binding agreement where the donor (often a government or company) expects specific deliverables or outcomes in return.
+    """)
 
     st.markdown("### 📈 Foreign Donations by Country Over Time")
     trend_data = (
@@ -244,3 +240,4 @@ with tab3:
         labels={"Amount": "Donation ($)"}
     )
     st.plotly_chart(trend_fig, use_container_width=True)
+
