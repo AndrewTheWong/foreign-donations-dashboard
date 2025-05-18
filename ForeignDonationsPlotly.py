@@ -113,7 +113,7 @@ with tab2:
     ))
 
     # Bottom-up stacking of countries
-    country_totals = country_breakdowns.groupby("Country")["Amount"].sum().sort_values().index.tolist()
+    country_totals = country_breakdowns.groupby("Country")["Amount"].sum().sort_values(ascending=False).index.tolist()
     for country in country_totals:
         subset = country_breakdowns[country_breakdowns["Country"] == country]
         subset = subset.set_index("School").reindex(sorted_schools).fillna(0).reset_index()
@@ -123,7 +123,7 @@ with tab2:
             name=country,
             marker_color=color_map.get(country.upper(), None),
             hovertemplate=f"{country}: $%{{y:,.0f}}<extra></extra>",
-            offsetgroup="schools",
+            offsetgroup="stacked",
             base=0
         ))
 
