@@ -74,16 +74,10 @@ with tab1:
 # TAB 2
 with tab2:
     st.subheader("🏛️ Top 10 US Universities by Total Foreign Donations")
-    top_schools_bar = filtered_df.groupby("School")["Amount"].sum().sort_values(ascending=False).head(10).reset_index()
-    top_schools = top_schools_bar.copy()
-    top_schools["Total Donations"] = top_schools["Amount"].map("${:,.0f}".format)
-    st.dataframe(top_schools[["School", "Total Donations"]], use_container_width=True, hide_index=True)
-    top10_bar = px.bar(top_schools_bar, x="School", y="Amount", color="Amount", color_continuous_scale="Reds", title="Top 10 Universities by Total Foreign Donations", hover_data={"Amount": ":,.0f"})
-    top10_bar.update_layout(xaxis_tickangle=45)
-    st.plotly_chart(top10_bar, use_container_width=True)
 
-    st.markdown("### 📊 Visual Breakdown of Foreign Donations to Selected Schools")
+    top_schools_bar = filtered_df.groupby("School")["Amount"].sum().sort_values(ascending=False).head(10).reset_index()
     top10_schools_list = top_schools_bar["School"].tolist()
+
     chosen_schools = st.multiselect("Choose universities to compare", sorted(df["School"].unique()), default=top10_schools_list)
 
     school_totals = df[df["School"].isin(chosen_schools)].groupby("School")["Amount"].sum().reset_index()
@@ -91,9 +85,7 @@ with tab2:
 
     color_map = {
         "CHINA": "#de2910", "QATAR": "#8A1538", "ENGLAND": "#00247d",
-        "UNITED ARAB EMIRATES": "#00732f", "SAUDI ARABIA": "#006C35",
-        "CANADA": "#ff0000", "GERMANY": "#000000", "FRANCE": "#0055A4",
-        "JAPAN": "#bc002d", "SOUTH KOREA": "#003478", "HONG KONG": "#ba0001"
+        "SAUDI ARABIA": "#006C35", "CANADA": "#ff0000"
     }
 
     sorted_schools = school_totals.sort_values("Amount", ascending=False)["School"].tolist()
@@ -108,32 +100,39 @@ with tab2:
         opacity=0.3,
         hoverinfo="skip",
         showlegend=True,
-        offsetgroup="reference",
-        base=0
+        offsetgroup="reference"
     ))
 
-    # Bottom-up stacking of countries
-    country_totals = country_breakdowns.groupby("Country")["Amount"].sum().sort_values(ascending=False).index.tolist()
-    for country in country_totals:
-        subset = country_breakdowns[country_breakdowns["Country"] == country]
-        subset = subset.set_index("School").reindex(sorted_schools).fillna(0).reset_index()
-        fig.add_trace(go.Bar(
-            x=subset["School"],
-            y=subset["Amount"],
-            name=country,
-            marker_color=color_map.get(country.upper(), None),
-            hovertemplate=f"{country}: $%{{y:,.0f}}<extra></extra>",
-            offsetgroup="stacked",
-            base=0
-        ))
+    # Maintain a tracker for the current top of the stack per school
+    current_height = {school: 0 for school in sorted_schools}
 
-    fig.update_layout(title="Foreign Donations by Country for Selected Schools", barmode="stack", xaxis_tickangle=45, height=600)
+    for school in sorted_schools:
+        school_data = country_breakdowns[country_breakdowns["School"] == school].sort_values("Amount", ascending=False)
+        for _, row in school_data.iterrows():
+            y_val = row["Amount"]
+            base_val = current_height[school]
+
+            fig.add_trace(go.Bar(
+                x=[school],
+                y=[y_val],
+                name=row["Country"],
+                marker_color=color_map.get(row["Country"].upper(), None),
+                hovertemplate=f"{row['Country']}: $%{{y:,.0f}}<extra></extra>",
+                offsetgroup="schools",
+                base=base_val,
+                showlegend=(school == sorted_schools[0])
+            ))
+
+            current_height[school] += y_val  # update stack height
+
+    fig.update_layout(
+        title="Foreign Donations by Country for Selected Schools",
+        barmode="relative",
+        xaxis_tickangle=45,
+        height=600
+    )
+
     st.plotly_chart(fig, use_container_width=True)
-
-    st.markdown("### 📊 Donation Breakdown by Country for Selected Schools (Ordered Table)")
-    breakdown_table = filtered_df[filtered_df["School"].isin(chosen_schools)].groupby(["School", "Country"])["Amount"].sum().reset_index().sort_values(by="Amount", ascending=False).rename(columns={"Amount": "Total Donations"})
-    breakdown_table["Total Donations"] = breakdown_table["Total Donations"].map("${:,.0f}".format)
-    st.dataframe(breakdown_table, use_container_width=True, hide_index=True)
 
 # TAB 3
 with tab3:
