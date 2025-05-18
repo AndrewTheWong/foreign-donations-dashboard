@@ -248,8 +248,8 @@ breakdown_table = (
         .sort_values(by="Amount", ascending=False)
         .rename(columns={"Amount": "Total Donations"})
     )
-    breakdown_table["Total Donations"] = breakdown_table["Total Donations"].map("${:,.0f}".format)
-    st.dataframe(breakdown_table, use_container_width=True, hide_index=True)
+breakdown_table["Total Donations"] = breakdown_table["Total Donations"].map("${:,.0f}".format)
+st.dataframe(breakdown_table, use_container_width=True, hide_index=True)
 
 # === TAB 3: Donations by Country ===
 with tab3:
