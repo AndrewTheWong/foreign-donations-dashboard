@@ -9,7 +9,7 @@ st.markdown("### Explore trends by school and country using data from 1981–202
 # Load data
 df = pd.read_csv("cleaned_foreign_donations.csv", parse_dates=["Date"])
 
-# Sidebar: Filters
+# Sidebar filters
 start_year, end_year = st.sidebar.slider(
     "Select year range",
     min_value=1981,
@@ -28,7 +28,12 @@ selected_countries = st.sidebar.multiselect(
     default=top_countries
 )
 
-# Filtered data
+st.sidebar.markdown("---")
+st.sidebar.markdown("### Credits")
+st.sidebar.caption("Built by **Andrew Wong**  \nOpen source. All rights reserved.")
+st.sidebar.markdown("📬 [Contact on X](https://x.com/AndrewTheWong_)")
+
+# Filter data
 filtered_df = df[
     (df["Date"].dt.year.between(start_year, end_year)) &
     (df["Country"].isin(selected_countries))
@@ -57,7 +62,7 @@ with tab1:
     )
 
     st.markdown("**Ordered Table of Donations by Country:**")
-    st.dataframe(school_data)
+    st.dataframe(school_data, use_container_width=True, hide_index=True)
 
     st.markdown("**Bar Chart:**")
     school_fig = px.bar(
@@ -176,7 +181,15 @@ with tab3:
         .reset_index()
         .rename(columns={"Amount": "Total Donations"})
     )
-    st.dataframe(country_table)
+    country_table["Total Donations"] = country_table["Total Donations"].map("${:,.0f}".format)
+    st.dataframe(country_table, use_container_width=True, hide_index=True)
+
+    st.markdown("### 📌 Donation Types Explained")
+    st.markdown(\"""
+- **Gift**: A voluntary contribution with no expectation of direct return. Often used to support general or targeted academic initiatives.
+- **Restricted Gift**: A gift earmarked for a specific use—like a research center, scholarship fund, or endowed chair.
+- **Contract**: A legally binding agreement where the donor (often a government or company) expects specific deliverables or outcomes in return.
+    \""")
 
     st.markdown("### 📈 Foreign Donations by Country Over Time")
     trend_data = (
