@@ -40,7 +40,7 @@ for country in selected_countries:
         y=plot_df[country],
         name=country.title(),
         marker_color=color_map.get(country.upper(), None),
-        hovertemplate=f'%{x}<br>' + country.title() + ': $%{y:,.0f}<extra></extra>'
+        hovertemplate=f'{{x}}<br>{country.title()}: ${{y:,.0f}}<extra></extra>'
     ))
 
 fig.add_trace(go.Scatter(
