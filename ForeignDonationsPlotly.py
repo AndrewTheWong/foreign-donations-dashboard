@@ -6,10 +6,13 @@ st.set_page_config(layout="wide")
 st.title("Top 30 US Universities by Foreign Donations")
 st.markdown("### Explore foreign donations from top 10 countries to U.S. universities (2024 data)")
 
-# Load corrected data
+# Load corrected CSV
 df = pd.read_csv("top30_donations_top10countries_corrected.csv", index_col=0)
 
-# Flag emoji map (cover all top 10 countries)
+# Rename misclassified countries
+df.columns = [col.replace("ENGLAND", "UNITED KINGDOM") for col in df.columns]
+
+# Flag and color maps
 flag_map = {
     "CHINA": "🇨🇳",
     "QATAR": "🇶🇦",
@@ -20,10 +23,11 @@ flag_map = {
     "SINGAPORE": "🇸🇬",
     "GERMANY": "🇩🇪",
     "FRANCE": "🇫🇷",
-    "SOUTH KOREA": "🇰🇷"
+    "SOUTH KOREA": "🇰🇷",
+    "SWITZERLAND": "🇨🇭",
+    "HONG KONG": "🇭🇰"
 }
 
-# Color map (flag-inspired)
 color_map = {
     "CHINA": "#de2910",
     "QATAR": "#8D1B3D",
@@ -34,26 +38,27 @@ color_map = {
     "SINGAPORE": "#EF3340",
     "GERMANY": "#000000",
     "FRANCE": "#0055A4",
-    "SOUTH KOREA": "#003478"
+    "SOUTH KOREA": "#003478",
+    "SWITZERLAND": "#D52B1E",
+    "HONG KONG": "#BA0C2F"
 }
 
-# Filter for country columns
+# Filter for country-specific columns
 country_cols = [col for col in df.columns if col != "Total Foreign Donations"]
 
-# Sidebar filters
+# Sidebar
 selected_countries = st.sidebar.multiselect(
     "Select countries to display (stacked in order)",
     country_cols,
     default=country_cols
 )
-
 top_n = st.sidebar.slider("Number of universities to show", 5, 30, 30)
 plot_df = df.head(top_n)
 
-# Initialize figure
+# Plotly figure
 fig = go.Figure()
 
-# Add background total bar (light gray)
+# Add background total donation bar
 fig.add_trace(go.Bar(
     x=plot_df.index,
     y=plot_df["Total Foreign Donations"],
@@ -63,18 +68,20 @@ fig.add_trace(go.Bar(
     hovertemplate='<b>%{x}</b><br>Total: $%{y:,.0f}<extra></extra>'
 ))
 
-# Add stacked country bars
+# Add each selected country as a stacked bar
 for country in selected_countries:
-    emoji = flag_map.get(country.upper(), "")
+    label = country.replace("ENGLAND", "UNITED KINGDOM")
+    emoji = flag_map.get(label.upper(), "")
+    color = color_map.get(label.upper(), "#888888")
     fig.add_trace(go.Bar(
         x=plot_df.index,
         y=plot_df[country],
-        name=f"{emoji} {country.title()}",
-        marker_color=color_map.get(country.upper(), "#888888"),
-        hovertemplate='<b>%{x}</b><br>' + f'{emoji} {country.title()}: $%{{y:,.0f}}<extra></extra>'
+        name=f"{emoji} {label.title()}",
+        marker_color=color,
+        hovertemplate='<b>%{x}</b><br>' + f'{emoji} {label.title()}: $%{{y:,.0f}}<extra></extra>'
     ))
 
-# Add total as text labels above bars
+# Add text annotation of total value
 fig.add_trace(go.Scatter(
     x=plot_df.index,
     y=plot_df["Total Foreign Donations"],
@@ -85,7 +92,7 @@ fig.add_trace(go.Scatter(
     showlegend=False
 ))
 
-# Final layout tweaks
+# Layout settings
 fig.update_layout(
     barmode='overlay',
     height=750,
@@ -96,4 +103,5 @@ fig.update_layout(
     hovermode='x unified'
 )
 
+# Render
 st.plotly_chart(fig, use_container_width=True)
