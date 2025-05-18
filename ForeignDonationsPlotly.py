@@ -7,7 +7,7 @@ st.set_page_config(layout="wide")
 st.title("Top 30 US Universities by Foreign Donations")
 st.markdown("### Explore foreign donations from top 10 countries to U.S. universities (2024 data)")
 
-df = pd.read_csv("top30_donations_top10countries.csv", index_col=0)
+df = pd.read_csv("top30_donations_top10countries_corrected.csv", index_col=0)
 
 color_map = {
     "CHINA": "#de2910",
@@ -34,29 +34,31 @@ plot_df = df.head(top_n)
 
 fig = go.Figure()
 
+# Plot background total bar
+fig.add_trace(go.Bar(
+    x=plot_df.index,
+    y=plot_df["Total Foreign Donations"],
+    name="Total Foreign Donations",
+    marker_color="lightgray",
+    opacity=0.4,
+    hovertemplate='%{x}<br>Total: $%{y:,.0f}<extra></extra>'
+))
+
+# Stack each selected country
+bottom = pd.Series([0] * len(plot_df), index=plot_df.index)
+
 for country in selected_countries:
     fig.add_trace(go.Bar(
         x=plot_df.index,
         y=plot_df[country],
         name=country.title(),
         marker_color=color_map.get(country.upper(), None),
-        hovertemplate=f'{{x}}<br>{country.title()}: ${{y:,.0f}}<extra></extra>'
+        hovertemplate=f'{{x}}<br>China: ${{y:,.0f}}<extra></extra>'
     ))
 
-fig.add_trace(go.Scatter(
-    x=plot_df.index,
-    y=plot_df["Total Foreign Donations"],
-    mode="markers+text",
-    text=[f"${val/1e6:.1f}M" for val in plot_df["Total Foreign Donations"]],
-    textposition="top center",
-    name="Total",
-    marker=dict(color="lightgray", size=1),
-    showlegend=False
-))
-
 fig.update_layout(
-    barmode='stack',
-    height=700,
+    barmode='overlay',
+    height=750,
     xaxis_tickangle=-45,
     yaxis_title='Donation Amount (USD)',
     title='Top 30 US Universities by Foreign Donations',
