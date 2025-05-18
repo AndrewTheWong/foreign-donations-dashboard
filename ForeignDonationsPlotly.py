@@ -9,7 +9,7 @@ st.markdown("### Explore foreign donations from top 10 countries to U.S. univers
 # Load corrected data
 df = pd.read_csv("top30_donations_top10countries_corrected.csv", index_col=0)
 
-# Flag emojis by country
+# Flag emoji map (cover all top 10 countries)
 flag_map = {
     "CHINA": "🇨🇳",
     "QATAR": "🇶🇦",
@@ -20,9 +20,10 @@ flag_map = {
     "SINGAPORE": "🇸🇬",
     "GERMANY": "🇩🇪",
     "FRANCE": "🇫🇷",
-    "SOUTH KOREA": "🇰🇷",
+    "SOUTH KOREA": "🇰🇷"
 }
 
+# Color map (flag-inspired)
 color_map = {
     "CHINA": "#de2910",
     "QATAR": "#8D1B3D",
@@ -33,10 +34,10 @@ color_map = {
     "SINGAPORE": "#EF3340",
     "GERMANY": "#000000",
     "FRANCE": "#0055A4",
-    "SOUTH KOREA": "#003478",
+    "SOUTH KOREA": "#003478"
 }
 
-# Country columns only (exclude total)
+# Filter for country columns
 country_cols = [col for col in df.columns if col != "Total Foreign Donations"]
 
 # Sidebar filters
@@ -49,21 +50,31 @@ selected_countries = st.sidebar.multiselect(
 top_n = st.sidebar.slider("Number of universities to show", 5, 30, 30)
 plot_df = df.head(top_n)
 
-# Create figure
+# Initialize figure
 fig = go.Figure()
 
-# Add each country’s donations as stacked bars
+# Add background total bar (light gray)
+fig.add_trace(go.Bar(
+    x=plot_df.index,
+    y=plot_df["Total Foreign Donations"],
+    name="Total Foreign Donations",
+    marker_color="lightgray",
+    opacity=0.3,
+    hovertemplate='<b>%{x}</b><br>Total: $%{y:,.0f}<extra></extra>'
+))
+
+# Add stacked country bars
 for country in selected_countries:
     emoji = flag_map.get(country.upper(), "")
     fig.add_trace(go.Bar(
         x=plot_df.index,
         y=plot_df[country],
         name=f"{emoji} {country.title()}",
-        marker_color=color_map.get(country.upper(), None),
+        marker_color=color_map.get(country.upper(), "#888888"),
         hovertemplate='<b>%{x}</b><br>' + f'{emoji} {country.title()}: $%{{y:,.0f}}<extra></extra>'
     ))
 
-# Add total donation text labels
+# Add total as text labels above bars
 fig.add_trace(go.Scatter(
     x=plot_df.index,
     y=plot_df["Total Foreign Donations"],
@@ -74,9 +85,9 @@ fig.add_trace(go.Scatter(
     showlegend=False
 ))
 
-# Layout
+# Final layout tweaks
 fig.update_layout(
-    barmode='relative',
+    barmode='overlay',
     height=750,
     xaxis_tickangle=-45,
     yaxis_title='Donation Amount (USD)',
@@ -85,5 +96,4 @@ fig.update_layout(
     hovermode='x unified'
 )
 
-# Show chart
 st.plotly_chart(fig, use_container_width=True)
