@@ -137,20 +137,27 @@ with tab2:
     top_schools["Total Donations"] = top_schools["Total Donations"].map("${:,.0f}".format)
     st.dataframe(top_schools, use_container_width=True, hide_index=True)
 
-    st.markdown("**Bar Chart:**")
+    st.markdown("**Bar Chart (Heatmap Scale):**")
+    top_schools_bar = (
+        filtered_df.groupby("School")["Amount"]
+        .sum()
+        .sort_values(ascending=False)
+        .head(10)
+        .reset_index()
+    )
     top10_bar = px.bar(
-        top_schools,
+        top_schools_bar,
         x="School",
-        y="Total Donations",
-        title="Top 10 Universities by Total Foreign Donations",
-        color="Total Donations",
+        y="Amount",
+        color="Amount",
         color_continuous_scale="Reds",
-        hover_data={"Total Donations": True}
+        title="Top 10 Universities by Total Foreign Donations",
+        hover_data={"Amount": ":,.0f"}
     )
     top10_bar.update_layout(xaxis_tickangle=45)
     st.plotly_chart(top10_bar, use_container_width=True)
 
-    st.markdown("### 📊 Donation Breakdown by Country for Selected Schools (Ordered Table)")
+    st.markdown("### 📊 Visual Breakdown of Foreign Donations to Selected Schools")
 
     default_schools = [
         "Harvard University", "Yale University", "Princeton University", "Columbia University",
@@ -165,6 +172,75 @@ with tab2:
         default=[s for s in default_schools if s in filtered_df["School"].unique()]
     )
 
+    school_totals = (
+        filtered_df[filtered_df["School"].isin(chosen_schools)]
+        .groupby("School")["Amount"]
+        .sum()
+        .reset_index()
+    )
+
+    country_breakdowns = (
+        filtered_df[
+            (filtered_df["School"].isin(chosen_schools)) &
+            (filtered_df["Country"].isin(selected_countries))
+        ]
+        .groupby(["School", "Country"])["Amount"]
+        .sum()
+        .reset_index()
+    )
+
+    color_map = {
+        "CHINA": "#de2910",
+        "QATAR": "#8A1538",
+        "UNITED KINGDOM": "#00247d",
+        "UNITED ARAB EMIRATES": "#00732f",
+        "SAUDI ARABIA": "#006C35",
+        "CANADA": "#d80621",
+        "GERMANY": "#000000",
+        "FRANCE": "#0055A4",
+        "JAPAN": "#bc002d",
+        "SOUTH KOREA": "#003478"
+    }
+
+    import plotly.graph_objects as go
+
+    # Sort schools left to right by total donation
+    sorted_schools = school_totals.sort_values("Amount", ascending=False)["School"].tolist()
+
+    fig = go.Figure()
+
+    # Background bars (total donations)
+    fig.add_trace(go.Bar(
+        x=sorted_schools,
+        y=school_totals.set_index("School").loc[sorted_schools]["Amount"],
+        name="Total",
+        marker_color="lightgray",
+        opacity=0.4,
+        hoverinfo="skip"
+    ))
+
+    # Stacked bars by country
+    for country in country_breakdowns["Country"].unique():
+        subset = country_breakdowns[country_breakdowns["Country"] == country]
+        subset = subset.set_index("School").reindex(sorted_schools).fillna(0).reset_index()
+        fig.add_trace(go.Bar(
+            x=subset["School"],
+            y=subset["Amount"],
+            name=country,
+            marker_color=color_map.get(country.upper(), "#888"),
+            hovertemplate=f"{country}: $%{{y:,.0f}}<extra></extra>"
+        ))
+
+    fig.update_layout(
+        title="Foreign Donations by Country for Selected Schools",
+        barmode="overlay",
+        xaxis_tickangle=45,
+        height=600
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("### 📊 Donation Breakdown by Country for Selected Schools (Ordered Table)")
+
     breakdown_table = (
         filtered_df[filtered_df["School"].isin(chosen_schools)]
         .groupby(["School", "Country"])["Amount"]
@@ -175,30 +251,6 @@ with tab2:
     )
     breakdown_table["Total Donations"] = breakdown_table["Total Donations"].map("${:,.0f}".format)
     st.dataframe(breakdown_table, use_container_width=True, hide_index=True)
-
-    st.markdown("### 📊 Visual Breakdown of Foreign Donations to Selected Schools")
-
-    chart_data = (
-        filtered_df[
-            (filtered_df["School"].isin(chosen_schools)) &
-            (filtered_df["Country"].isin(selected_countries))
-        ]
-        .groupby(["School", "Country"])["Amount"]
-        .sum()
-        .reset_index()
-    )
-
-    school_country_bar = px.bar(
-        chart_data,
-        x="School",
-        y="Amount",
-        color="Country",
-        title="Foreign Donations by Country for Selected Schools",
-        height=600,
-        hover_data={"Amount": ":,.0f"}
-    )
-    school_country_bar.update_layout(barmode="stack", xaxis_tickangle=45)
-    st.plotly_chart(school_country_bar, use_container_width=True)
 
 
 # === TAB 3: Donations by Country ===
