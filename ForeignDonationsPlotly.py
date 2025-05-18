@@ -19,34 +19,37 @@ start_year, end_year = st.sidebar.slider(
     step=1
 )
 
+# Sidebar: Country multiselect
 all_countries = sorted(df["Country"].unique())
-selected_country = st.sidebar.selectbox("Filter by country (optional)", ["All"] + all_countries)
-selected_countries = all_countries if selected_country == "All" else [selected_country]
+selected_countries = st.sidebar.multiselect(
+    "Filter by country (optional)",
+    options=all_countries,
+    default=all_countries
+)
 
-# Filter dataset
+# Filtered dataset
 filtered_df = df[
     (df["Date"].dt.year.between(start_year, end_year)) &
     (df["Country"].isin(selected_countries))
 ]
 
-# Flag emoji fallback function
+# Flag emoji helper
 def flag_emoji(country):
     try:
         return emoji.emojize(f":{country.strip().replace(' ', '_').upper()}:", language="alias")
     except:
         return "🌍"
 
-# Tab navigation dropdown
-tab_labels = {
-    "🏫 Top Universities": "tab1",
-    "🌍 Donations by Country": "tab2",
-    "📈 Country Trends": "tab3",
-    "🔍 School Breakdown": "tab4"
-}
-selected_tab = st.selectbox("Navigate to section", list(tab_labels.keys()))
+# ==== Tabs Navigation ====
+tab1, tab2, tab3, tab4 = st.tabs([
+    "🏫 Top Universities",
+    "🌍 Donations by Country",
+    "📈 Country Trends",
+    "🔍 School Breakdown"
+])
 
-# === TAB 1: Top Universities ===
-if selected_tab == "🏫 Top Universities":
+# === TAB 1 ===
+with tab1:
     st.subheader("🏫 Top 30 US Universities by Total Foreign Donations")
     school_summary = (
         filtered_df.groupby("School")["Amount"]
@@ -71,7 +74,6 @@ if selected_tab == "🏫 Top Universities":
 
     st.markdown("---")
     st.subheader("🌐 Donation Breakdown by Country for Selected Schools")
-
     top_20 = school_summary["School"].tolist()[:20]
     chosen_schools = st.multiselect(
         "Choose universities",
@@ -99,8 +101,8 @@ if selected_tab == "🏫 Top Universities":
     bar.update_layout(barmode="stack", xaxis_tickangle=45)
     st.plotly_chart(bar, use_container_width=True)
 
-# === TAB 2: Country Totals ===
-elif selected_tab == "🌍 Donations by Country":
+# === TAB 2 ===
+with tab2:
     st.subheader("🌍 Total Foreign Donations by Country (Ordered Table)")
     country_table = (
         filtered_df.groupby("Country")["Amount"]
@@ -112,8 +114,8 @@ elif selected_tab == "🌍 Donations by Country":
     country_table = country_table.rename(columns={"Amount": "Total Donations"})
     st.dataframe(country_table)
 
-# === TAB 3: Country Trends ===
-elif selected_tab == "📈 Country Trends":
+# === TAB 3 ===
+with tab3:
     st.subheader("📈 Foreign Donations by Country Over Time")
     trend_data = (
         filtered_df.copy()
@@ -133,10 +135,9 @@ elif selected_tab == "📈 Country Trends":
     )
     st.plotly_chart(trend_fig, use_container_width=True)
 
-# === TAB 4: Single School Breakdown ===
-elif selected_tab == "🔍 School Breakdown":
+# === TAB 4 ===
+with tab4:
     st.subheader("🔍 Donations to a Specific School by Country")
-
     selected_school = st.selectbox("Choose a university", sorted(filtered_df["School"].unique()))
 
     school_data = (
