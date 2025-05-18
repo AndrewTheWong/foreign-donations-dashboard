@@ -39,4 +39,54 @@ with tab1:
         .reset_index()
     )
 
-    bar_fig_
+    bar_fig = px.bar(
+        summary,
+        x="Country",
+        y="Amount",
+        color="Country",
+        animation_frame=summary["Date"].dt.year.astype(str),
+        range_y=[0, summary["Amount"].max() * 1.1],
+        title="Foreign Donations by Country Over Time"
+    )
+    st.plotly_chart(bar_fig, use_container_width=True)
+
+    st.subheader("📈 Country Donation Trends (Line Chart)")
+
+    line_df = summary.copy()
+    line_df["Year"] = line_df["Date"].dt.year
+    line_summary = line_df.groupby(["Year", "Country"])["Amount"].sum().reset_index()
+
+    line_fig = px.line(
+        line_summary,
+        x="Year",
+        y="Amount",
+        color="Country",
+        title="Donation Trends by Country Over Time"
+    )
+    st.plotly_chart(line_fig, use_container_width=True)
+
+# ==========================
+# 🏫 TAB 2: Top Universities
+# ==========================
+with tab2:
+    st.subheader("🏫 Top 30 US Universities by Foreign Donations")
+
+    school_summary = (
+        filtered_df.groupby("School")["Amount"]
+        .sum()
+        .sort_values(ascending=False)
+        .head(30)
+        .reset_index()
+        .rename(columns={"Amount": "Total Donations"})
+    )
+
+    school_fig = px.bar(
+        school_summary,
+        x="School",
+        y="Total Donations",
+        title="Top 30 Universities by Total Foreign Donations",
+        labels={"School": "University"},
+        color="Total Donations"
+    )
+    school_fig.update_layout(xaxis_tickangle=45)
+    st.plotly_chart(school_fig, use_container_width=True)
