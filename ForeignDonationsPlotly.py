@@ -34,7 +34,8 @@ selected_countries = st.sidebar.multiselect("Countries:", options=all_countries,
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### Credits")
-st.sidebar.caption("Built by **Andrew Wong** All rights reserved.")
+st.sidebar.caption("Built by **Andrew Wong**  
+All rights reserved.")
 st.sidebar.markdown("📬 [Follow me on X @AndrewTheWong_](https://x.com/AndrewTheWong_)")
 
 # Filter data
@@ -97,29 +98,44 @@ with tab2:
     }
 
     sorted_schools = school_totals.sort_values("Amount", ascending=False)["School"].tolist()
+    country_totals = country_breakdowns.groupby("Country")["Amount"].sum().sort_values().index.tolist()
+
     fig = go.Figure()
+
+    # Reference total bar (light gray, behind, not stacked)
     fig.add_trace(go.Bar(
         x=sorted_schools,
         y=school_totals.set_index("School").loc[sorted_schools]["Amount"],
         name="Total Donations (Reference)",
         marker_color="lightgray",
-        opacity=0.2,
-        hoverinfo="skip"
+        opacity=0.3,
+        hoverinfo="skip",
+        showlegend=True,
+        offsetgroup="reference",
+        base=0
     ))
 
-    country_totals = country_breakdowns.groupby("Country")["Amount"].sum().sort_values().index.tolist()  # ascending for bottom-up stacking
+    # Add stacked bars per country
     for country in country_totals:
         subset = country_breakdowns[country_breakdowns["Country"] == country]
         subset = subset.set_index("School").reindex(sorted_schools).fillna(0).reset_index()
+
         fig.add_trace(go.Bar(
             x=subset["School"],
             y=subset["Amount"],
             name=country,
             marker_color=color_map.get(country.upper(), None),
-            hovertemplate=f"{country}: $%{{y:,.0f}}<extra></extra>"
+            hovertemplate=f"{country}: $%{{y:,.0f}}<extra></extra>",
+            offsetgroup="stacked",
+            base=0
         ))
 
-    fig.update_layout(title="Foreign Donations by Country for Selected Schools", barmode="stack", xaxis_tickangle=45, height=600)
+    fig.update_layout(
+        title="Foreign Donations by Country for Selected Schools",
+        barmode="stack",
+        xaxis_tickangle=45,
+        height=600
+    )
     st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("### 📊 Donation Breakdown by Country for Selected Schools (Ordered Table)")
