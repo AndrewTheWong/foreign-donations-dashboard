@@ -5,37 +5,44 @@ import plotly.graph_objects as go
 
 st.set_page_config(layout="wide")
 st.title("Top 30 US Universities by Foreign Donations")
-st.markdown("### Explore foreign donations from all countries to U.S. universities (2024 data)")
+st.markdown("### Explore foreign donations from top 10 countries to U.S. universities (2024 data)")
 
-# Load the enhanced data file
-df = pd.read_csv("top30_donations_all_countries.csv", index_col=0)
+df = pd.read_csv("top30_donations_top10countries.csv", index_col=0)
 
-# Sidebar filters
-country_cols = [col for col in df.columns if col not in ["Total Foreign Donations"]]
+color_map = {
+    "CHINA": "#de2910",
+    "QATAR": "#8D1B3D",
+    "UNITED ARAB EMIRATES": "#00732F",
+    "SAUDI ARABIA": "#006C35",
+    "UNITED KINGDOM": "#00247D",
+    "CANADA": "#FF0000",
+    "SINGAPORE": "#EF3340",
+    "GERMANY": "#000000",
+    "FRANCE": "#0055A4",
+    "SOUTH KOREA": "#003478"
+}
+
+country_cols = [col for col in df.columns if col != "Total Foreign Donations"]
 selected_countries = st.sidebar.multiselect(
     "Select countries to display (stacked in order)",
     country_cols,
-    default=["QATAR", "CHINA", "UNITED ARAB EMIRATES", "SAUDI ARABIA"]
+    default=country_cols
 )
 
 top_n = st.sidebar.slider("Number of universities to show", 5, 30, 30)
 plot_df = df.head(top_n)
 
-# Build stacked bar chart
 fig = go.Figure()
-
-# Stacked base
-bottom = pd.Series([0] * len(plot_df), index=plot_df.index)
 
 for country in selected_countries:
     fig.add_trace(go.Bar(
         x=plot_df.index,
         y=plot_df[country],
         name=country.title(),
-        hovertemplate='%{x}<br>' + country.title() + ': $%{y:,.0f}<extra></extra>'
+        marker_color=color_map.get(country.upper(), None),
+        hovertemplate=f'%{x}<br>' + country.title() + ': $%{y:,.0f}<extra></extra>'
     ))
 
-# Add total as reference line
 fig.add_trace(go.Scatter(
     x=plot_df.index,
     y=plot_df["Total Foreign Donations"],
