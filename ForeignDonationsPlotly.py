@@ -164,18 +164,15 @@ with tab2:
 
     st.markdown("### 📊 Visual Breakdown of Foreign Donations to Selected Schools")
 
-    default_schools = [
-        "Harvard University", "Yale University", "Princeton University", "Columbia University",
-        "University of Pennsylvania", "Brown University", "Dartmouth College", "Cornell University",
-        "Stanford University", "University of California-Berkeley", "University of California-Los Angeles",
-        "Duke University", "Georgetown University"
-    ]
+    #Use Top 10 schools from earlier in tab as default comparison group
+    top10_schools_list = top_schools_bar["School"].tolist()
 
     chosen_schools = st.multiselect(
         "Choose universities to compare",
-        sorted(filtered_df["School"].unique()),
-        default=[s for s in default_schools if s in filtered_df["School"].unique()]
+        sorted(df["School"].unique()),
+        default=top10_schools_list
     )
+
 
     school_totals = (
         filtered_df[filtered_df["School"].isin(chosen_schools)]
