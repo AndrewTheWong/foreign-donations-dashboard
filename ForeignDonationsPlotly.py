@@ -9,7 +9,7 @@ st.markdown("### Explore trends by school and country using data from 1981–202
 # Load cleaned data
 df = pd.read_csv("cleaned_foreign_donations.csv", parse_dates=["Date"])
 
-# Sidebar: Year filter (expanded to 1981–2024)
+# Sidebar: Year range filter
 start_year, end_year = st.sidebar.slider(
     "Select year range",
     min_value=1981,
@@ -18,21 +18,18 @@ start_year, end_year = st.sidebar.slider(
     step=1
 )
 
-# Optional: Country filter
+# Sidebar: Country dropdown filter
 all_countries = sorted(df["Country"].unique())
-selected_countries = st.sidebar.multiselect(
-    "Filter by country (optional)",
-    options=all_countries,
-    default=all_countries
-)
+selected_country_option = st.sidebar.selectbox("Filter by country (optional)", ["All"] + all_countries)
+selected_countries = all_countries if selected_country_option == "All" else [selected_country_option]
 
-# Filter data by year and country
+# Filter by date and country
 filtered_df = df[
     (df["Date"].dt.year.between(start_year, end_year)) &
     (df["Country"].isin(selected_countries))
 ]
 
-# Country flag map for display
+# Flag emoji map
 flag_map = {
     "CHINA": "🇨🇳", "QATAR": "🇶🇦", "UNITED ARAB EMIRATES": "🇦🇪", "SAUDI ARABIA": "🇸🇦",
     "UNITED KINGDOM": "🇬🇧", "CANADA": "🇨🇦", "SINGAPORE": "🇸🇬", "GERMANY": "🇩🇪",
@@ -40,10 +37,10 @@ flag_map = {
     "JAPAN": "🇯🇵", "INDIA": "🇮🇳", "MEXICO": "🇲🇽", "BRAZIL": "🇧🇷"
 }
 
-# ========== TABS ==========
-tab1, tab2 = st.tabs(["🏫 Top US Universities", "🌍 Country Trends"])
+# === TABS ===
+tab1, tab2, tab3 = st.tabs(["🏫 Top US Universities", "🌍 Country Trends", "🔍 School Country Breakdown"])
 
-# === TAB 1: Universities ===
+# === TAB 1: Top 30 Universities ===
 with tab1:
     st.subheader("🏫 Top 30 US Universities by Total Foreign Donations")
 
@@ -103,22 +100,6 @@ with tab1:
     breakdown_fig.update_layout(barmode="stack", xaxis_tickangle=45)
     st.plotly_chart(breakdown_fig, use_container_width=True)
 
-    st.markdown("---")
-    st.subheader("🌍 Total Donations by Country (Ordered Table)")
-
-    country_table = (
-        filtered_df.groupby("Country")["Amount"]
-        .sum()
-        .sort_values(ascending=False)
-        .reset_index()
-        .rename(columns={"Amount": "Total Donations"})
-    )
-    country_table["Country"] = country_table["Country"].apply(
-        lambda c: f"{flag_map.get(c.upper(), '')} {c.title()}"
-    )
-
-    st.dataframe(country_table)
-
 # === TAB 2: Country Trends ===
 with tab2:
     st.subheader("📈 Foreign Donations by Country Over Time (Line Chart)")
@@ -141,3 +122,35 @@ with tab2:
         labels={"Amount": "Donation ($)"}
     )
     st.plotly_chart(line_fig, use_container_width=True)
+
+# === TAB 3: Single School Breakdown ===
+with tab3:
+    st.subheader("🔍 View Donations to a Selected School by Country")
+
+    selected_school = st.selectbox("Choose a university", sorted(filtered_df["School"].unique()))
+
+    school_data = (
+        filtered_df[filtered_df["School"] == selected_school]
+        .groupby("Country")["Amount"]
+        .sum()
+        .sort_values(ascending=False)
+        .reset_index()
+    )
+
+    school_data["Country Flagged"] = school_data["Country"].apply(
+        lambda c: f"{flag_map.get(c.upper(), '')} {c.title()}"
+    )
+
+    st.markdown("**Ordered Table of Donations by Country:**")
+    st.dataframe(school_data.rename(columns={"Amount": "Total Donations"}))
+
+    st.markdown("**Bar Chart:**")
+    school_fig = px.bar(
+        school_data,
+        x="Country Flagged",
+        y="Amount",
+        title=f"Donations to {selected_school} by Country",
+        hover_data={"Amount": ":,.0f"}
+    )
+    school_fig.update_layout(xaxis_tickangle=45)
+    st.plotly_chart(school_fig, use_container_width=True)
