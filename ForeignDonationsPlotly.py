@@ -27,6 +27,8 @@ if "selected_countries" not in st.session_state:
 
 if st.sidebar.button("Select All Countries"):
     st.session_state.selected_countries = all_countries
+if st.sidebar.button("Top 5 Countries"):
+    st.session_state.selected_countries = top_countries
 if st.sidebar.button("Clear Selection"):
     st.session_state.selected_countries = []
 
