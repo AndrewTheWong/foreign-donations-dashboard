@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import emoji
 
 st.set_page_config(layout="wide")
 st.title("US University Foreign Donations Dashboard")
@@ -19,28 +18,26 @@ start_year, end_year = st.sidebar.slider(
     step=1
 )
 
-# Sidebar: Country multiselect
+# Country multiselect with Gulf states added
 all_countries = sorted(df["Country"].unique())
+default_countries = [
+    "QATAR", "CHINA", "CANADA", "GERMANY",
+    "UNITED KINGDOM", "SOUTH KOREA", "JAPAN", "FRANCE",
+    "UNITED ARAB EMIRATES", "SAUDI ARABIA"
+]
 selected_countries = st.sidebar.multiselect(
-    "Filter by country (optional)",
+    "Filter by country",
     options=all_countries,
-    default=all_countries
+    default=[c for c in all_countries if c.upper() in default_countries]
 )
 
-# Filtered dataset
+# Filter data
 filtered_df = df[
     (df["Date"].dt.year.between(start_year, end_year)) &
     (df["Country"].isin(selected_countries))
 ]
 
-# Flag emoji helper
-def flag_emoji(country):
-    try:
-        return emoji.emojize(f":{country.strip().replace(' ', '_').upper()}:", language="alias")
-    except:
-        return "🌍"
-
-# ==== Tabs Navigation ====
+# ==== Tabs ====
 tab1, tab2, tab3, tab4 = st.tabs([
     "🏫 Top Universities",
     "🌍 Donations by Country",
@@ -48,9 +45,10 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "🔍 School Breakdown"
 ])
 
-# === TAB 1 ===
+# === TAB 1: Top Universities ===
 with tab1:
     st.subheader("🏫 Top 30 US Universities by Total Foreign Donations")
+
     school_summary = (
         filtered_df.groupby("School")["Amount"]
         .sum()
@@ -74,6 +72,7 @@ with tab1:
 
     st.markdown("---")
     st.subheader("🌐 Donation Breakdown by Country for Selected Schools")
+
     top_20 = school_summary["School"].tolist()[:20]
     chosen_schools = st.multiselect(
         "Choose universities",
@@ -87,13 +86,12 @@ with tab1:
         .sum()
         .reset_index()
     )
-    breakdown["Country Flagged"] = breakdown["Country"].apply(lambda c: f"{flag_emoji(c)} {c.title()}")
 
     bar = px.bar(
         breakdown,
         x="School",
         y="Amount",
-        color="Country Flagged",
+        color="Country",
         title="Foreign Donations to Selected Schools by Country",
         height=700,
         hover_data={"Amount": ":,.0f"}
@@ -101,22 +99,23 @@ with tab1:
     bar.update_layout(barmode="stack", xaxis_tickangle=45)
     st.plotly_chart(bar, use_container_width=True)
 
-# === TAB 2 ===
+# === TAB 2: Country Table ===
 with tab2:
     st.subheader("🌍 Total Foreign Donations by Country (Ordered Table)")
+
     country_table = (
         filtered_df.groupby("Country")["Amount"]
         .sum()
         .sort_values(ascending=False)
         .reset_index()
+        .rename(columns={"Amount": "Total Donations"})
     )
-    country_table["Country"] = country_table["Country"].apply(lambda c: f"{flag_emoji(c)} {c.title()}")
-    country_table = country_table.rename(columns={"Amount": "Total Donations"})
     st.dataframe(country_table)
 
-# === TAB 3 ===
+# === TAB 3: Country Trends ===
 with tab3:
     st.subheader("📈 Foreign Donations by Country Over Time")
+
     trend_data = (
         filtered_df.copy()
         .assign(Year=filtered_df["Date"].dt.year)
@@ -124,6 +123,7 @@ with tab3:
         .sum()
         .reset_index()
     )
+
     trend_fig = px.line(
         trend_data,
         x="Year",
@@ -135,9 +135,10 @@ with tab3:
     )
     st.plotly_chart(trend_fig, use_container_width=True)
 
-# === TAB 4 ===
+# === TAB 4: School Breakdown ===
 with tab4:
     st.subheader("🔍 Donations to a Specific School by Country")
+
     selected_school = st.selectbox("Choose a university", sorted(filtered_df["School"].unique()))
 
     school_data = (
@@ -146,19 +147,19 @@ with tab4:
         .sum()
         .sort_values(ascending=False)
         .reset_index()
+        .rename(columns={"Amount": "Total Donations"})
     )
-    school_data["Country Flagged"] = school_data["Country"].apply(lambda c: f"{flag_emoji(c)} {c.title()}")
 
     st.markdown("**Ordered Table of Donations by Country:**")
-    st.dataframe(school_data.rename(columns={"Amount": "Total Donations"}))
+    st.dataframe(school_data)
 
     st.markdown("**Bar Chart:**")
     school_fig = px.bar(
         school_data,
-        x="Country Flagged",
-        y="Amount",
+        x="Country",
+        y="Total Donations",
         title=f"Donations to {selected_school} by Country",
-        hover_data={"Amount": ":,.0f"}
+        hover_data={"Total Donations": ":,.0f"}
     )
     school_fig.update_layout(xaxis_tickangle=45)
     st.plotly_chart(school_fig, use_container_width=True)
