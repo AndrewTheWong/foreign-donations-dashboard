@@ -24,14 +24,32 @@ start_year, end_year = st.sidebar.slider(
 )
 
 st.sidebar.markdown("### Country Filter")
-st.sidebar.caption("🔍 Select countries to filter the data. Default shows top 5 donor countries.")
+st.sidebar.caption("🔍 Select countries to filter the data.")
+
+# Get country options and default top 5
 top_countries = df.groupby("Country")["Amount"].sum().sort_values(ascending=False).head(5).index.tolist()
 all_countries = sorted(df["Country"].unique())
+
+# Initialize session state for country selection
+if "selected_countries" not in st.session_state:
+    st.session_state.selected_countries = top_countries
+
+# Select All button
+if st.sidebar.button("Select All Countries"):
+    st.session_state.selected_countries = all_countries
+
+# Clear button (optional)
+if st.sidebar.button("Clear Selection"):
+    st.session_state.selected_countries = []
+
+# Multiselect UI
 selected_countries = st.sidebar.multiselect(
     "Countries:",
     options=all_countries,
-    default=top_countries
+    default=st.session_state.selected_countries,
+    key="selected_countries"
 )
+
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### Credits")
