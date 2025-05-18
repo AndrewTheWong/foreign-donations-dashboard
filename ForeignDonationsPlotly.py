@@ -93,6 +93,13 @@ with tab1:
         labels={"Amount": "Donation ($)"}
     )
     st.plotly_chart(school_line, use_container_width=True)
+    
+    st.markdown("### 📌 Donation Types Explained")
+    st.markdown("""
+- **Gift**: A voluntary contribution with no expectation of direct return. Often used to support general or targeted academic initiatives.
+- **Restricted Gift**: A gift earmarked for a specific use—like a research center, scholarship fund, or endowed chair.
+- **Contract**: A legally binding agreement where the donor (often a government or company) expects specific deliverables or outcomes in return.
+    """)
 
     st.markdown("**📑 Breakdown of Contract vs Gift**")
     if "Type" in df.columns:
@@ -183,13 +190,6 @@ with tab3:
     )
     country_table["Total Donations"] = country_table["Total Donations"].map("${:,.0f}".format)
     st.dataframe(country_table, use_container_width=True, hide_index=True)
-
-    st.markdown("### 📌 Donation Types Explained")
-    st.markdown("""
-- **Gift**: A voluntary contribution with no expectation of direct return. Often used to support general or targeted academic initiatives.
-- **Restricted Gift**: A gift earmarked for a specific use—like a research center, scholarship fund, or endowed chair.
-- **Contract**: A legally binding agreement where the donor (often a government or company) expects specific deliverables or outcomes in return.
-    """)
 
     st.markdown("### 📈 Foreign Donations by Country Over Time")
     trend_data = (
