@@ -62,7 +62,10 @@ with tab1:
     )
 
     st.markdown("**Ordered Table of Donations by Country:**")
-    st.dataframe(school_data, use_container_width=True, hide_index=True)
+    formatted_table = school_data.copy()
+    formatted_table["Total Donations"] = formatted_table["Total Donations"].map("${:,.0f}".format)
+    st.dataframe(formatted_table, use_container_width=True, hide_index=True)
+
 
     st.markdown("**Bar Chart:**")
     school_fig = px.bar(
