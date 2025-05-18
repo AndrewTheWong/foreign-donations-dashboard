@@ -292,11 +292,41 @@ with tab2:
         .index.tolist()
     )
 
+    # Compute total donations from all countries for true ordering
+    true_totals = (
+        df[df["School"].isin(chosen_schools)]
+        .groupby("School")["Amount"]
+        .sum()
+        .sort_values(ascending=False)
+    )
+
+    sorted_schools = true_totals.index.tolist()
+    true_totals = true_totals.reset_index()
+
+    # Get country-specific data from selected countries
+    country_breakdowns = (
+        df[
+            (df["School"].isin(sorted_schools)) &
+            (df["Country"].isin(selected_countries))
+        ]
+        .groupby(["School", "Country"])["Amount"]
+        .sum()
+        .reset_index()
+    )
+
+    country_totals = (
+        country_breakdowns.groupby("Country")["Amount"]
+        .sum()
+        .sort_values(ascending=True)
+        .index.tolist()
+    )
+
     fig = go.Figure()
 
+    # Colored bars: stack by ascending so biggest is on bottom
     for country in country_totals:
         subset = country_breakdowns[country_breakdowns["Country"] == country]
-        subset = subset.set_index("School").reindex(chosen_schools).fillna(0).reset_index()
+        subset = subset.set_index("School").reindex(sorted_schools).fillna(0).reset_index()
         fig.add_trace(go.Bar(
             x=subset["School"],
             y=subset["Amount"],
@@ -305,19 +335,9 @@ with tab2:
             hovertemplate=f"{country}: $%{{y:,.0f}}<extra></extra>"
         ))
 
-    fig.add_trace(go.Bar(
-        x=chosen_schools,
-        y=true_totals["Amount"],
-        name="Total Donations (All Countries)",
-        marker_color="lightgray",
-        opacity=0.2,
-        hoverinfo="skip",
-        showlegend=True
-    ))
-
     fig.update_layout(
         title="Foreign Donations by Country for Selected Schools",
-        barmode="overlay",
+        barmode="stack",
         xaxis_tickangle=45,
         height=600
     )
