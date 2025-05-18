@@ -236,31 +236,51 @@ with tab2:
         .index.tolist()
     )
 
+    # Use total donations from ALL countries for gray bar
+    true_totals = (
+        df[df["School"].isin(chosen_schools)]
+        .groupby("School")["Amount"]
+        .sum()
+        .reindex(chosen_schools)
+        .reset_index()
+    )
+
+    # Filtered breakdown for selected countries
+    country_breakdowns = (
+        df[
+            (df["School"].isin(chosen_schools)) &
+            (df["Country"].isin(selected_countries))
+        ]
+        .groupby(["School", "Country"])["Amount"]
+        .sum()
+        .reset_index()
+    )
+
+    # Sort countries ascending to stack bottom-up
+    country_totals = (
+        country_breakdowns.groupby("Country")["Amount"]
+        .sum()
+        .sort_values(ascending=True)
+        .index.tolist()
+    )
+
     fig = go.Figure()
 
-    # Background total bar (faint gray)
+    # Gray reference bar (total donations)
     fig.add_trace(go.Bar(
-        x=sorted_schools,
-        y=school_totals.set_index("School").loc[sorted_schools]["Amount"],
-        name="Total Donations (Reference)",
+        x=chosen_schools,
+        y=true_totals["Amount"],
+        name="Total Donations (All Countries)",
         marker_color="lightgray",
         opacity=0.2,
         hoverinfo="skip",
         showlegend=True
     ))
 
-    # Sort countries by total ascending (to stack bottom-up)
-    country_totals = (
-        country_breakdowns
-        .groupby("Country")["Amount"]
-        .sum()
-        .sort_values(ascending=False)
-        .index.tolist()
-    )
-
+    # Colored sub-bars for selected countries stacked in ascending order
     for country in country_totals:
         subset = country_breakdowns[country_breakdowns["Country"] == country]
-        subset = subset.set_index("School").reindex(sorted_schools).fillna(0).reset_index()
+        subset = subset.set_index("School").reindex(chosen_schools).fillna(0).reset_index()
         fig.add_trace(go.Bar(
             x=subset["School"],
             y=subset["Amount"],
@@ -271,7 +291,7 @@ with tab2:
 
     fig.update_layout(
         title="Foreign Donations by Country for Selected Schools",
-        barmode="overlay",
+        barmode="stack",
         xaxis_tickangle=45,
         height=600
     )
