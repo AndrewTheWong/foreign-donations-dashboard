@@ -185,11 +185,12 @@ with tab3:
     st.dataframe(country_table, use_container_width=True, hide_index=True)
 
     st.markdown("### 📌 Donation Types Explained")
-    st.markdown(\"""
+st.markdown("""
 - **Gift**: A voluntary contribution with no expectation of direct return. Often used to support general or targeted academic initiatives.
 - **Restricted Gift**: A gift earmarked for a specific use—like a research center, scholarship fund, or endowed chair.
 - **Contract**: A legally binding agreement where the donor (often a government or company) expects specific deliverables or outcomes in return.
-    \""")
+""")
+
 
     st.markdown("### 📈 Foreign Donations by Country Over Time")
     trend_data = (
