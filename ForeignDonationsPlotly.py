@@ -24,8 +24,8 @@ start_year, end_year = st.sidebar.slider(
 )
 
 st.sidebar.markdown("### Country Filter")
-st.sidebar.caption("🔍 Select countries to filter the data. Default shows top 10 donor countries.")
-top_countries = df.groupby("Country")["Amount"].sum().sort_values(ascending=False).head(10).index.tolist()
+st.sidebar.caption("🔍 Select countries to filter the data. Default shows top 5 donor countries.")
+top_countries = df.groupby("Country")["Amount"].sum().sort_values(ascending=False).head(5).index.tolist()
 all_countries = sorted(df["Country"].unique())
 selected_countries = st.sidebar.multiselect(
     "Countries:",
