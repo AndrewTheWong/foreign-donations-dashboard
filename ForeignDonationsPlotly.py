@@ -239,9 +239,8 @@ fig.update_layout(
     )
 
 
-    st.markdown("### 📊 Donation Breakdown by Country for Selected Schools (Ordered Table)")
-
-    breakdown_table = (
+st.markdown("### 📊 Donation Breakdown by Country for Selected Schools (Ordered Table)")
+breakdown_table = (
         df[df["School"].isin(chosen_schools)]
         .groupby(["School", "Country"])["Amount"]
         .sum()
