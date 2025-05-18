@@ -200,14 +200,16 @@ with tab2:
 
     fig = go.Figure()
 
-    fig.add_trace(go.Bar(
-        x=sorted_schools,
-        y=school_totals.set_index("School").loc[sorted_schools]["Amount"],
-        name="Total",
-        marker_color="lightgray",
-        opacity=0.3,
-        hoverinfo="skip"
+    fig.add_trace(go.Scatter(
+    x=sorted_schools,
+    y=school_totals.set_index("School").loc[sorted_schools]["Amount"],
+    name="Total Donations",
+    mode="lines+markers",
+    line=dict(color="lightgray", dash="dash", width=2),
+    hoverinfo="skip",
+    showlegend=True
     ))
+
 
     for country in country_totals:
         subset = country_breakdowns[country_breakdowns["Country"] == country]
