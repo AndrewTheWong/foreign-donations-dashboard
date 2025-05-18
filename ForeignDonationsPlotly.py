@@ -136,6 +136,7 @@ with tab2:
     )
     top_schools["Total Donations"] = top_schools["Total Donations"].map("${:,.0f}".format)
     st.dataframe(top_schools, use_container_width=True, hide_index=True)
+
     st.markdown("### 📊 Donation Breakdown by Country for Selected Schools (Ordered Table)")
 
     default_schools = [
@@ -161,54 +162,32 @@ with tab2:
     )
     breakdown_table["Total Donations"] = breakdown_table["Total Donations"].map("${:,.0f}".format)
     st.dataframe(breakdown_table, use_container_width=True, hide_index=True)
-    st.subheader("📊 Donation Breakdown by Country for Selected Schools (Bar Graph)")
 
-    default_schools = [
-        "Harvard University", "Yale University", "Princeton University", "Columbia University",
-        "University of Pennsylvania", "Brown University", "Dartmouth College", "Cornell University",
-        "Stanford University", "University of California-Berkeley", "University of California-Los Angeles",
-        "Duke University", "Georgetown University"
-    ]
+    st.markdown("### 📊 Visual Breakdown of Foreign Donations to Selected Schools")
 
-    chosen_schools = st.multiselect(
-        "Choose universities to compare",
-        sorted(filtered_df["School"].unique()),
-        default=[s for s in default_schools if s in filtered_df["School"].unique()]
-    )
-
-    breakdown = (
-        filtered_df[filtered_df["School"].isin(chosen_schools)]
+    # Group by school and country for chart
+    chart_data = (
+        filtered_df[
+            (filtered_df["School"].isin(chosen_schools)) &
+            (filtered_df["Country"].isin(selected_countries))
+        ]
         .groupby(["School", "Country"])["Amount"]
         .sum()
         .reset_index()
     )
 
-    # ✅ Intuitive color mapping based on national flag or identity
-    color_map = {
-        "CHINA": "#de2910",               # red (flag red)
-        "QATAR": "#8A1538",               # maroon (flag)
-        "UNITED KINGDOM": "#00247d",      # navy blue (Union Jack)
-        "UNITED ARAB EMIRATES": "#00732f",# green (flag stripe)
-        "SAUDI ARABIA": "#006C35",        # green (flag)
-        "CANADA": "#d80621",              # red (maple leaf)
-        "GERMANY": "#000000",             # black (flag)
-        "FRANCE": "#0055A4",              # blue (tricolor)
-        "JAPAN": "#bc002d",               # red circle
-        "SOUTH KOREA": "#003478"          # blue (Taeguk)
-    }
-
-    comparison_bar = px.bar(
-        breakdown,
+    school_country_bar = px.bar(
+        chart_data,
         x="School",
         y="Amount",
         color="Country",
-        color_discrete_map=color_map,
-        title="Foreign Donations to Selected Schools by Country",
-        height=700,
+        title="Foreign Donations by Country for Selected Schools",
+        height=600,
         hover_data={"Amount": ":,.0f"}
     )
-    comparison_bar.update_layout(barmode="stack", xaxis_tickangle=45)
-    st.plotly_chart(comparison_bar, use_container_width=True)
+    school_country_bar.update_layout(barmode="stack", xaxis_tickangle=45)
+    st.plotly_chart(school_country_bar, use_container_width=True)
+
 
 # === TAB 3: Donations by Country ===
 with tab3:
