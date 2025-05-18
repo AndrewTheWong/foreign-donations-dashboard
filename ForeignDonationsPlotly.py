@@ -189,28 +189,6 @@ with tab2:
         .reset_index()
     )
 
-    color_map = {
-    "CHINA": "#de2910",             # red (flag red)
-    "QATAR": "#8A1538",             # deep maroon
-    "UNITED KINGDOM": "#00247d",    # royal blue
-    "UNITED ARAB EMIRATES": "#00732f",  # deep green
-    "SAUDI ARABIA": "#006C35",      # green
-    "CANADA": "#ff0000",            # maple red
-    "GERMANY": "#000000",           # black (flag top stripe)
-    "FRANCE": "#0055A4",            # French blue
-    "JAPAN": "#bc002d",             # red circle
-    "SOUTH KOREA": "#003478",       # deep blue (Taeguk colors)
-    "INDIA": "#ff9933",             # saffron
-    "ISRAEL": "#0747a6",            # flag blue
-    "RUSSIA": "#0033a0",            # dark flag blue
-    "TURKEY": "#e30a17",            # crimson red
-    "SINGAPORE": "#d50032",         # red
-    "SWITZERLAND": "#e30613",       # flag red
-    "AUSTRALIA": "#00205b",         # dark blue
-    "BRAZIL": "#009739",            # green
-    "MEXICO": "#006341",            # flag green
-    }
-
 
     import plotly.graph_objects as go
 
