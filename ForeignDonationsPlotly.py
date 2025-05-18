@@ -207,18 +207,29 @@ with tab2:
 
     sorted_schools = school_totals.sort_values("Amount", ascending=False)["School"].tolist()
 
+    # Get countries sorted by total donation across chosen schools
+    country_totals = (
+        country_breakdowns
+        .groupby("Country")["Amount"]
+        .sum()
+        .sort_values(ascending=False)
+        .index.tolist()
+    )
+
     fig = go.Figure()
 
+    # Background total donations bar
     fig.add_trace(go.Bar(
         x=sorted_schools,
         y=school_totals.set_index("School").loc[sorted_schools]["Amount"],
         name="Total",
         marker_color="lightgray",
-        opacity=0.4,
+        opacity=0.3,
         hoverinfo="skip"
     ))
 
-    for country in country_breakdowns["Country"].unique():
+    # Add country bars sorted by size (biggest on bottom)
+    for country in country_totals:
         subset = country_breakdowns[country_breakdowns["Country"] == country]
         subset = subset.set_index("School").reindex(sorted_schools).fillna(0).reset_index()
         fig.add_trace(go.Bar(
@@ -231,7 +242,7 @@ with tab2:
 
     fig.update_layout(
         title="Foreign Donations by Country for Selected Schools",
-        barmode="overlay",
+        barmode="stack",  # stacking prevents sub-bars from covering each other
         xaxis_tickangle=45,
         height=600
     )
