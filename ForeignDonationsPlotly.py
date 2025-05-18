@@ -1,13 +1,13 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 
 st.set_page_config(layout="wide")
 st.title("US University Foreign Donations Dashboard")
 st.markdown("### Explore trends by school and country using data from 1981–2024")
 
-# ✅ Load and clean data
+# Load data
+# Load and clean data
 df = pd.read_csv("cleaned_foreign_donations.csv", parse_dates=["Date"])
 df.columns = df.columns.str.strip()
 if "Country" not in df.columns:
@@ -24,7 +24,7 @@ start_year, end_year = st.sidebar.slider(
 )
 
 st.sidebar.markdown("### Country Filter")
-st.sidebar.caption("🔍 Select countries to filter the data.")
+st.sidebar.caption("🔍 Select countries to filter the data. Default shows top 10 donor countries.")
 top_countries = df.groupby("Country")["Amount"].sum().sort_values(ascending=False).head(10).index.tolist()
 all_countries = sorted(df["Country"].unique())
 selected_countries = st.sidebar.multiselect(
@@ -33,14 +33,23 @@ selected_countries = st.sidebar.multiselect(
     default=top_countries
 )
 
-# Filter data based on sidebar selections
+st.sidebar.markdown("---")
+st.sidebar.markdown("### Credits")
+st.sidebar.caption("Built by **Andrew Wong**  \nAll rights reserved.")
+st.sidebar.markdown("📬 [Follow me on X @AndrewTheWong_](https://x.com/AndrewTheWong_)")
+
+# Filter data
 filtered_df = df[
     (df["Date"].dt.year.between(start_year, end_year)) &
     (df["Country"].isin(selected_countries))
 ]
 
-# Tabs
-tab1, tab2, tab3 = st.tabs(["🏫 School Breakdown", "📊 Compare Schools", "🌍 Donations by Country"])
+# === TABS ===
+tab1, tab2, tab3 = st.tabs([
+    "🏫 School Breakdown",
+    "📊 Compare Schools",
+    "🌍 Donations by Country"
+])
 
 # === TAB 1: School Breakdown ===
 with tab1:
@@ -56,9 +65,12 @@ with tab1:
         .reset_index()
         .rename(columns={"Amount": "Total Donations"})
     )
+
+    st.markdown("**Ordered Table of Donations by Country:**")
     formatted_table = school_data.copy()
     formatted_table["Total Donations"] = formatted_table["Total Donations"].map("${:,.0f}".format)
     st.dataframe(formatted_table, use_container_width=True, hide_index=True)
+
 
     st.markdown("**Bar Chart:**")
     school_fig = px.bar(
@@ -79,6 +91,7 @@ with tab1:
         .sum()
         .reset_index()
     )
+
     school_line = px.line(
         school_trend,
         x="Year",
@@ -88,6 +101,13 @@ with tab1:
         labels={"Amount": "Donation ($)"}
     )
     st.plotly_chart(school_line, use_container_width=True)
+    
+    st.markdown("### 📌 Donation Types Explained")
+    st.markdown("""
+- **Gift**: A voluntary contribution with no expectation of direct return. Often used to support general or targeted academic initiatives.
+- **Restricted Gift**: A gift earmarked for a specific use—like a research center, scholarship fund, or endowed chair.
+- **Contract**: A legally binding agreement where the donor (often a government or company) expects specific deliverables or outcomes in return.
+    """)
 
     st.markdown("**📑 Breakdown of Contract vs Gift**")
     if "Type" in df.columns:
@@ -112,7 +132,7 @@ with tab2:
     st.subheader("🏛️ Top 10 US Universities by Total Foreign Donations")
 
     top_schools = (
-        df.groupby("School")["Amount"]
+        filtered_df.groupby("School")["Amount"]
         .sum()
         .sort_values(ascending=False)
         .head(10)
@@ -124,7 +144,7 @@ with tab2:
 
     st.markdown("**Bar Chart (Heatmap Scale):**")
     top_schools_bar = (
-        df.groupby("School")["Amount"]
+        filtered_df.groupby("School")["Amount"]
         .sum()
         .sort_values(ascending=False)
         .head(10)
@@ -153,21 +173,21 @@ with tab2:
 
     chosen_schools = st.multiselect(
         "Choose universities to compare",
-        sorted(df["School"].unique()),
-        default=[s for s in default_schools if s in df["School"].unique()]
+        sorted(filtered_df["School"].unique()),
+        default=[s for s in default_schools if s in filtered_df["School"].unique()]
     )
 
     school_totals = (
-        df[df["School"].isin(chosen_schools)]
+        filtered_df[filtered_df["School"].isin(chosen_schools)]
         .groupby("School")["Amount"]
         .sum()
         .reset_index()
     )
 
     country_breakdowns = (
-        df[
-            (df["School"].isin(chosen_schools)) &
-            (df["Country"].isin(selected_countries))
+        filtered_df[
+            (filtered_df["School"].isin(chosen_schools)) &
+            (filtered_df["Country"].isin(selected_countries))
         ]
         .groupby(["School", "Country"])["Amount"]
         .sum()
@@ -188,8 +208,33 @@ with tab2:
         "HONG KONG": "#ba0001"
     }
 
+    import plotly.graph_objects as go
+
     sorted_schools = school_totals.sort_values("Amount", ascending=False)["School"].tolist()
 
+    # Get countries sorted by total donation across chosen schools
+    country_totals = (
+        country_breakdowns
+        .groupby("Country")["Amount"]
+        .sum()
+        .sort_values(ascending=False)
+        .index.tolist()
+    )
+
+    fig = go.Figure()
+
+    # Background total bar (faint gray)
+    fig.add_trace(go.Bar(
+        x=sorted_schools,
+        y=school_totals.set_index("School").loc[sorted_schools]["Amount"],
+        name="Total Donations (Reference)",
+        marker_color="lightgray",
+        opacity=0.2,
+        hoverinfo="skip",
+        showlegend=True
+    ))
+
+    # Sort countries by total ascending (to stack bottom-up)
     country_totals = (
         country_breakdowns
         .groupby("Country")["Amount"]
@@ -198,59 +243,38 @@ with tab2:
         .index.tolist()
     )
 
-    fig = go.Figure()
+    for country in country_totals:
+        subset = country_breakdowns[country_breakdowns["Country"] == country]
+        subset = subset.set_index("School").reindex(sorted_schools).fillna(0).reset_index()
+        fig.add_trace(go.Bar(
+            x=subset["School"],
+            y=subset["Amount"],
+            name=country,
+            marker_color=color_map.get(country.upper(), None),
+            hovertemplate=f"{country}: $%{{y:,.0f}}<extra></extra>"
+        ))
 
-# Background total bar (drawn first)
-fig.add_trace(go.Bar(
-    x=sorted_schools,
-    y=school_totals.set_index("School").loc[sorted_schools]["Amount"],
-    name="Total Donations (Reference)",
-    marker_color="lightgray",
-    opacity=0.2,
-    hoverinfo="skip",
-    showlegend=True
-))
+    fig.update_layout(
+        title="Foreign Donations by Country for Selected Schools",
+        barmode="overlay",
+        xaxis_tickangle=45,
+        height=600
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
-# Now stack colored bars on top, bottom-up (ascending order)
-country_totals = (
-    country_breakdowns
-    .groupby("Country")["Amount"]
-    .sum()
-    .sort_values(ascending=True)
-    .index.tolist()
-)
+    st.markdown("### 📊 Donation Breakdown by Country for Selected Schools (Ordered Table)")
 
-for country in country_totals:
-    subset = country_breakdowns[country_breakdowns["Country"] == country]
-    subset = subset.set_index("School").reindex(sorted_schools).fillna(0).reset_index()
-    fig.add_trace(go.Bar(
-        x=subset["School"],
-        y=subset["Amount"],
-        name=country,
-        marker_color=color_map.get(country.upper(), None),
-        hovertemplate=f"{country}: $%{{y:,.0f}}<extra></extra>"
-    ))
-
-fig.update_layout(
-    title="Foreign Donations by Country for Selected Schools",
-    barmode="overlay",  # use overlay so total bar is behind
-    xaxis_tickangle=45,
-    height=600
-)
-
-
-
-st.markdown("### 📊 Donation Breakdown by Country for Selected Schools (Ordered Table)")
-breakdown_table = (
-        df[df["School"].isin(chosen_schools)]
+    breakdown_table = (
+        filtered_df[filtered_df["School"].isin(chosen_schools)]
         .groupby(["School", "Country"])["Amount"]
         .sum()
         .reset_index()
         .sort_values(by="Amount", ascending=False)
         .rename(columns={"Amount": "Total Donations"})
     )
-breakdown_table["Total Donations"] = breakdown_table["Total Donations"].map("${:,.0f}".format)
-st.dataframe(breakdown_table, use_container_width=True, hide_index=True)
+    breakdown_table["Total Donations"] = breakdown_table["Total Donations"].map("${:,.0f}".format)
+    st.dataframe(breakdown_table, use_container_width=True, hide_index=True)
+
 
 # === TAB 3: Donations by Country ===
 with tab3:
@@ -291,3 +315,4 @@ with tab3:
         labels={"Amount": "Donation ($)"}
     )
     st.plotly_chart(trend_fig, use_container_width=True)
+
