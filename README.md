@@ -13,7 +13,7 @@ Built with **Streamlit** and **Plotly**, this tool lets users explore:
 
 ## 🚀 Try It Out
 
-> **Live App:** [[your-streamlit-link.com](#) ](https://foreign-donations-dashboard-2024.streamlit.app/) 
+> **Live App:** https://foreign-donations-dashboard-2024.streamlit.app 
 
 ---
 
