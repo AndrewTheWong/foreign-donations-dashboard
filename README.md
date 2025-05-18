@@ -13,8 +13,7 @@ Built with **Streamlit** and **Plotly**, this tool lets users explore:
 
 ## 🚀 Try It Out
 
-> **Live App:** [your-streamlit-link.com](#)  
-> *(or deploy it using the steps below)*
+> **Live App:** [[your-streamlit-link.com](#) ](https://foreign-donations-dashboard-2024.streamlit.app/) 
 
 ---
 
@@ -60,11 +59,11 @@ This dashboard uses public data from **Section 117 filings** maintained by the U
 
 ## 👤 Credits
 
-Made with 💡 by [Andrew Wong](https://x.com/AndrewTheWong_)  
+Made by [Andrew Wong](https://x.com/AndrewTheWong_)  
 All rights reserved. Open source for transparency and research.
 
 ---
 
 ## 📜 License
 
-MIT (or your preferred license)
+MIT 
