@@ -236,7 +236,8 @@ fig.update_layout(
     barmode="overlay",  # use overlay so total bar is behind
     xaxis_tickangle=45,
     height=600
-    )
+)
+
 
 
 st.markdown("### 📊 Donation Breakdown by Country for Selected Schools (Ordered Table)")
