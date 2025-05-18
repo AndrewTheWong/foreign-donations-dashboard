@@ -194,7 +194,7 @@ with tab2:
         country_breakdowns
         .groupby("Country")["Amount"]
         .sum()
-        .sort_values(ascending=False)
+        .sort_values(ascending=True)
         .index.tolist()
     )
 
