@@ -30,8 +30,8 @@ selected_countries = st.sidebar.multiselect(
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### Credits")
-st.sidebar.caption("Built by **Andrew Wong**  \nOpen source. All rights reserved.")
-st.sidebar.markdown("📬 [Contact on X](https://x.com/AndrewTheWong_)")
+st.sidebar.caption("Built by **Andrew Wong**  \nAll rights reserved.")
+st.sidebar.markdown("📬 [Follow me on X @AndrewTheWong_](https://x.com/AndrewTheWong_)")
 
 # Filter data
 filtered_df = df[
