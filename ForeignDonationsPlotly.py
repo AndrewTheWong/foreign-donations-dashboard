@@ -189,15 +189,26 @@ with tab2:
         .reset_index()
     )
 
+    color_map = {
+        "CHINA": "#de2910",
+        "QATAR": "#8A1538",
+        "ENGLAND": "#00247d",
+        "UNITED ARAB EMIRATES": "#00732f",
+        "SAUDI ARABIA": "#006C35",
+        "CANADA": "#ff0000",
+        "GERMANY": "#000000",
+        "FRANCE": "#0055A4",
+        "JAPAN": "#bc002d",
+        "SOUTH KOREA": "#003478",
+        "HONG KONG": "#ba0001"
+    }
 
     import plotly.graph_objects as go
 
-    # Sort schools left to right by total donation
     sorted_schools = school_totals.sort_values("Amount", ascending=False)["School"].tolist()
 
     fig = go.Figure()
 
-    # Background bars (total donations)
     fig.add_trace(go.Bar(
         x=sorted_schools,
         y=school_totals.set_index("School").loc[sorted_schools]["Amount"],
@@ -207,7 +218,6 @@ with tab2:
         hoverinfo="skip"
     ))
 
-    # Stacked bars by country
     for country in country_breakdowns["Country"].unique():
         subset = country_breakdowns[country_breakdowns["Country"] == country]
         subset = subset.set_index("School").reindex(sorted_schools).fillna(0).reset_index()
@@ -215,7 +225,7 @@ with tab2:
             x=subset["School"],
             y=subset["Amount"],
             name=country,
-            marker_color=color_map.get(country.upper(), "#888"),
+            marker_color=color_map.get(country.upper(), None),
             hovertemplate=f"{country}: $%{{y:,.0f}}<extra></extra>"
         ))
 
