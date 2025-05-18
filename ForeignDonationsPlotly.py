@@ -124,7 +124,44 @@ with tab1:
 
 # === TAB 2: Compare Schools ===
 with tab2:
-    st.subheader("📊 Donation Breakdown by Country for Selected Schools")
+    st.subheader("🏛️ Top 10 US Universities by Total Foreign Donations")
+
+    top_schools = (
+        filtered_df.groupby("School")["Amount"]
+        .sum()
+        .sort_values(ascending=False)
+        .head(10)
+        .reset_index()
+        .rename(columns={"Amount": "Total Donations"})
+    )
+    top_schools["Total Donations"] = top_schools["Total Donations"].map("${:,.0f}".format)
+    st.dataframe(top_schools, use_container_width=True, hide_index=True)
+    st.markdown("### 📊 Donation Breakdown by Country for Selected Schools (Ordered Table)")
+
+    default_schools = [
+        "Harvard University", "Yale University", "Princeton University", "Columbia University",
+        "University of Pennsylvania", "Brown University", "Dartmouth College", "Cornell University",
+        "Stanford University", "University of California-Berkeley", "University of California-Los Angeles",
+        "Duke University", "Georgetown University"
+    ]
+
+    chosen_schools = st.multiselect(
+        "Choose universities to compare",
+        sorted(filtered_df["School"].unique()),
+        default=[s for s in default_schools if s in filtered_df["School"].unique()]
+    )
+
+    breakdown_table = (
+        filtered_df[filtered_df["School"].isin(chosen_schools)]
+        .groupby(["School", "Country"])["Amount"]
+        .sum()
+        .reset_index()
+        .sort_values(by="Amount", ascending=False)
+        .rename(columns={"Amount": "Total Donations"})
+    )
+    breakdown_table["Total Donations"] = breakdown_table["Total Donations"].map("${:,.0f}".format)
+    st.dataframe(breakdown_table, use_container_width=True, hide_index=True)
+    st.subheader("📊 Donation Breakdown by Country for Selected Schools (Bar Graph)")
 
     default_schools = [
         "Harvard University", "Yale University", "Princeton University", "Columbia University",
