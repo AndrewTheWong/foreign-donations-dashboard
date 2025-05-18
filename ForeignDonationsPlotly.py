@@ -200,35 +200,44 @@ with tab2:
 
     fig = go.Figure()
 
-    fig.add_trace(go.Scatter(
+# Background total bar (drawn first)
+fig.add_trace(go.Bar(
     x=sorted_schools,
     y=school_totals.set_index("School").loc[sorted_schools]["Amount"],
-    name="Total Donations",
-    mode="lines+markers",
-    line=dict(color="lightgray", dash="dash", width=2),
+    name="Total Donations (Reference)",
+    marker_color="lightgray",
+    opacity=0.2,
     hoverinfo="skip",
     showlegend=True
+))
+
+# Now stack colored bars on top, bottom-up (ascending order)
+country_totals = (
+    country_breakdowns
+    .groupby("Country")["Amount"]
+    .sum()
+    .sort_values(ascending=True)
+    .index.tolist()
+)
+
+for country in country_totals:
+    subset = country_breakdowns[country_breakdowns["Country"] == country]
+    subset = subset.set_index("School").reindex(sorted_schools).fillna(0).reset_index()
+    fig.add_trace(go.Bar(
+        x=subset["School"],
+        y=subset["Amount"],
+        name=country,
+        marker_color=color_map.get(country.upper(), None),
+        hovertemplate=f"{country}: $%{{y:,.0f}}<extra></extra>"
     ))
 
-
-    for country in country_totals:
-        subset = country_breakdowns[country_breakdowns["Country"] == country]
-        subset = subset.set_index("School").reindex(sorted_schools).fillna(0).reset_index()
-        fig.add_trace(go.Bar(
-            x=subset["School"],
-            y=subset["Amount"],
-            name=country,
-            marker_color=color_map.get(country.upper(), None),
-            hovertemplate=f"{country}: $%{{y:,.0f}}<extra></extra>"
-        ))
-
-    fig.update_layout(
-        title="Foreign Donations by Country for Selected Schools",
-        barmode="stack",
-        xaxis_tickangle=45,
-        height=600
+fig.update_layout(
+    title="Foreign Donations by Country for Selected Schools",
+    barmode="overlay",  # use overlay so total bar is behind
+    xaxis_tickangle=45,
+    height=600
     )
-    st.plotly_chart(fig, use_container_width=True)
+
 
     st.markdown("### 📊 Donation Breakdown by Country for Selected Schools (Ordered Table)")
 
