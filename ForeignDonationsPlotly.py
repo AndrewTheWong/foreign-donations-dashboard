@@ -146,11 +146,26 @@ with tab2:
         .reset_index()
     )
 
+    # ✅ Intuitive color mapping based on national flag or identity
+    color_map = {
+        "CHINA": "#de2910",               # red (flag red)
+        "QATAR": "#8A1538",               # maroon (flag)
+        "UNITED KINGDOM": "#00247d",      # navy blue (Union Jack)
+        "UNITED ARAB EMIRATES": "#00732f",# green (flag stripe)
+        "SAUDI ARABIA": "#006C35",        # green (flag)
+        "CANADA": "#d80621",              # red (maple leaf)
+        "GERMANY": "#000000",             # black (flag)
+        "FRANCE": "#0055A4",              # blue (tricolor)
+        "JAPAN": "#bc002d",               # red circle
+        "SOUTH KOREA": "#003478"          # blue (Taeguk)
+    }
+
     comparison_bar = px.bar(
         breakdown,
         x="School",
         y="Amount",
         color="Country",
+        color_discrete_map=color_map,
         title="Foreign Donations to Selected Schools by Country",
         height=700,
         hover_data={"Amount": ":,.0f"}
