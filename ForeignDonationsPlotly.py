@@ -18,27 +18,26 @@ start_year, end_year = st.sidebar.slider(
     step=1
 )
 
+st.sidebar.markdown("### Country Filter")
+st.sidebar.caption("🔍 Select countries to filter the data. Default shows top 10 donor countries.")
+top_countries = df.groupby("Country")["Amount"].sum().sort_values(ascending=False).head(10).index.tolist()
 all_countries = sorted(df["Country"].unique())
-default_countries = [
-    "QATAR", "CHINA", "CANADA", "GERMANY",
-    "UNITED KINGDOM", "SOUTH KOREA", "JAPAN", "FRANCE",
-    "UNITED ARAB EMIRATES", "SAUDI ARABIA"
-]
 selected_countries = st.sidebar.multiselect(
-    "Filter by country",
+    "Countries:",
     options=all_countries,
-    default=[c for c in all_countries if c.upper() in default_countries]
+    default=top_countries
 )
 
-# Filter dataset
+# Filtered data
 filtered_df = df[
     (df["Date"].dt.year.between(start_year, end_year)) &
     (df["Country"].isin(selected_countries))
 ]
 
-# Tabs
-tab1, tab2 = st.tabs([
+# === TABS ===
+tab1, tab2, tab3 = st.tabs([
     "🏫 School Breakdown",
+    "📊 Compare Schools",
     "🌍 Donations by Country"
 ])
 
@@ -79,6 +78,7 @@ with tab1:
         .sum()
         .reset_index()
     )
+
     school_line = px.line(
         school_trend,
         x="Year",
@@ -89,7 +89,26 @@ with tab1:
     )
     st.plotly_chart(school_line, use_container_width=True)
 
-    st.markdown("---")
+    st.markdown("**📑 Breakdown of Contract vs Gift**")
+    if "Type" in df.columns:
+        type_breakdown = (
+            filtered_df[filtered_df["School"] == selected_school]
+            .groupby("Type")["Amount"]
+            .sum()
+            .reset_index()
+        )
+        pie_chart = px.pie(
+            type_breakdown,
+            names="Type",
+            values="Amount",
+            title=f"Donation Types to {selected_school} (Contracts vs Gifts)"
+        )
+        st.plotly_chart(pie_chart, use_container_width=True)
+    else:
+        st.info("No contract/gift type data available in dataset.")
+
+# === TAB 2: Compare Schools ===
+with tab2:
     st.subheader("📊 Donation Breakdown by Country for Selected Schools")
 
     default_schools = [
@@ -124,8 +143,8 @@ with tab1:
     comparison_bar.update_layout(barmode="stack", xaxis_tickangle=45)
     st.plotly_chart(comparison_bar, use_container_width=True)
 
-# === TAB 2: Donations by Country ===
-with tab2:
+# === TAB 3: Donations by Country ===
+with tab3:
     st.subheader("🏛️ Top 30 US Universities by Total Foreign Donations")
 
     school_summary = (
