@@ -34,8 +34,7 @@ selected_countries = st.sidebar.multiselect("Countries:", options=all_countries,
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### Credits")
-st.sidebar.caption("Built by **Andrew Wong**  
-All rights reserved.")
+st.sidebar.caption("Built by **Andrew Wong** All rights reserved.")
 st.sidebar.markdown("📬 [Follow me on X @AndrewTheWong_](https://x.com/AndrewTheWong_)")
 
 # Filter data
