@@ -84,7 +84,7 @@ with tab1:
     school_fig = px.bar(school_data, x="Country", y="Total Donations", title=f"Donations to {selected_school} by Country", hover_data={"Total Donations": ":,.0f"})
     school_fig.update_layout(xaxis_tickangle=45)
     # Add invisible scatter line for shadow legend entry
-    fig.add_trace(go.Scatter(
+    school_fig.add_trace(go.Scatter(
         x=[None],
         y=[None],
         mode="lines",
