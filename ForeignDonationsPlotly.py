@@ -82,13 +82,22 @@ with tab2:
 
     chosen_schools = st.multiselect("Choose universities to compare", sorted(df["School"].unique()), default=top10_schools_list)
 
-    school_totals = df[df["School"].isin(chosen_schools)].groupby("School")["Amount"].sum().reset_index()
+    school_totals = df[(df["School"].isin(chosen_schools)) & (df["Date"].dt.year.between(start_year, end_year))].groupby("School")["Amount"].sum().reset_index()
     country_breakdowns = filtered_df[(filtered_df["School"].isin(chosen_schools)) & (filtered_df["Country"].isin(selected_countries))].groupby(["School", "Country"])["Amount"].sum().reset_index()
 
     color_map = {
         "CHINA": "#de2910", "QATAR": "#8A1538", "ENGLAND": "#00247d",
         "SAUDI ARABIA": "#006C35", "CANADA": "#ff0000"
     }
+
+# Assign consistent default colors to other countries not in color_map
+from itertools import cycle
+
+default_colors = cycle(px.colors.qualitative.Set3)
+for country in country_breakdowns["Country"].unique():
+    if country.upper() not in color_map:
+        color_map[country.upper()] = next(default_colors)
+
 
     sorted_schools = school_totals.sort_values("Amount", ascending=False)["School"].tolist()
     fig = go.Figure()
@@ -122,7 +131,7 @@ with tab2:
                 hovertemplate=f"{row['Country']}: $%{{y:,.0f}}<extra></extra>",
                 offsetgroup="schools",
                 base=base_val,
-                showlegend=(school == sorted_schools[0])
+                showlegend=row["Country"] not in [trace.name for trace in fig.data]
             ))
 
             current_height[school] += y_val  # update stack height
