@@ -82,6 +82,18 @@ with tab1:
     st.dataframe(formatted_table, use_container_width=True, hide_index=True)
     st.markdown("**Bar Chart:**")
     school_fig = px.bar(school_data, x="Country", y="Total Donations", title=f"Donations to {selected_school} by Country", hover_data={"Total Donations": ":,.0f"})
+    school_
+    # Add invisible scatter line for shadow legend entry
+    fig.add_trace(go.Scatter(
+        x=[None],
+        y=[None],
+        mode="lines",
+        line=dict(color="rgba(200,200,200,0.4)", width=10),
+        name="Total Donations (Reference)",
+        showlegend=True,
+        hoverinfo="skip"
+    ))
+    
     school_fig.update_layout(xaxis_tickangle=45)
     school_fig.add_trace(go.Bar(
         x=[None],
@@ -90,6 +102,19 @@ with tab1:
         marker=dict(color="rgba(200, 200, 200, 0.2)", line=dict(color="lightgray")),
         showlegend=True,
         hoverinfo='skip'
+    ))
+    
+
+    
+    # Add invisible scatter line for shadow legend entry
+    fig.add_trace(go.Scatter(
+        x=[None],
+        y=[None],
+        mode="lines",
+        line=dict(color="rgba(200,200,200,0.4)", width=10),
+        name="Total Donations (Reference)",
+        showlegend=True,
+        hoverinfo="skip"
     ))
     
     school_fig.update_layout(xaxis_tickangle=45)
@@ -122,10 +147,7 @@ with tab2:
     school_totals = filtered_df[filtered_df["School"].isin(chosen_schools)].groupby("School")["Amount"].sum().reset_index()
     country_breakdowns = filtered_df[(filtered_df["School"].isin(chosen_schools)) & (filtered_df["Country"].isin(selected_countries))].groupby(["School", "Country"])["Amount"].sum().reset_index()
 
-    color_map = {
-        "CHINA": "#de2910", "QATAR": "#8A1538", "ENGLAND": "#00247d",
-        "SAUDI ARABIA": "#006C35", "CANADA": "#ff0000"
-    }
+    
 
     sorted_schools = school_totals.sort_values("Amount", ascending=False)["School"].tolist()
     fig = go.Figure()
@@ -168,17 +190,21 @@ with tab2:
             current_height[school] += y_val  # update stack height
 
     
-    # Add dummy trace for shadow legend entry
-    fig.add_trace(go.Bar(
-        x=[None],
-        y=[None],
-        name="Total Donations (Reference)",
-        marker=dict(color="rgba(200, 200, 200, 0.2)", line=dict(color="lightgray")),
-        showlegend=True,
-        hoverinfo='skip'
-    ))
+
     
 
+
+    # Add invisible scatter line for shadow legend entry
+    fig.add_trace(go.Scatter(
+        x=[None],
+        y=[None],
+        mode="lines",
+        line=dict(color="rgba(200,200,200,0.4)", width=10),
+        name="Total Donations (Reference)",
+        showlegend=True,
+        hoverinfo="skip"
+    ))
+    
 fig.update_layout(
         title="Foreign Donations by Country for Selected Schools",
         barmode="relative",
