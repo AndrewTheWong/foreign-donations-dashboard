@@ -81,8 +81,10 @@ with tab1:
     formatted_table["Total Donations"] = formatted_table["Total Donations"].map("${:,.0f}".format)
     st.dataframe(formatted_table, use_container_width=True, hide_index=True)
     st.markdown("**Bar Chart:**")
-    school_fig = px.bar(school_data, x="Country", y="Total Donations", title=f"Donations to {selected_school} by Country", hover_data={"Total Donations": ":,.0f"})
+    school_data["Color"] = school_data["Country"].map(lambda c: country_color_map.get(c, "#999999"))
+    school_fig = px.bar(school_data, x="Country", y="Total Donations", title=f"Donations to {selected_school} by Country", color="Country", color_discrete_map=country_color_map, hover_data={"Total Donations": ":,.0f"})
     school_fig.update_layout(xaxis_tickangle=45)
+
     # Add invisible scatter line for shadow legend entry
     school_fig.add_trace(go.Scatter(
         x=[None],
@@ -94,18 +96,26 @@ with tab1:
         hoverinfo="skip"
     ))
     
+    
     school_fig.update_layout(xaxis_tickangle=45)
-    school_fig.add_trace(go.Bar(
+
+    # Add invisible scatter line for shadow legend entry
+    school_fig.add_trace(go.Scatter(
         x=[None],
         y=[None],
+        mode="lines",
+        line=dict(color="rgba(200,200,200,0.4)", width=10),
         name="Total Donations (Reference)",
-        marker=dict(color="rgba(200, 200, 200, 0.2)", line=dict(color="lightgray")),
         showlegend=True,
-        hoverinfo='skip'
+        hoverinfo="skip"
     ))
+    
     
 
     
+    
+    school_fig.update_layout(xaxis_tickangle=45)
+
     # Add invisible scatter line for shadow legend entry
     school_fig.add_trace(go.Scatter(
         x=[None],
@@ -117,7 +127,6 @@ with tab1:
         hoverinfo="skip"
     ))
     
-    school_fig.update_layout(xaxis_tickangle=45)
     st.plotly_chart(school_fig, use_container_width=True)
     st.markdown("**Line Chart (Donations Over Time):**")
     school_trend = filtered_df[filtered_df["School"] == selected_school].assign(Year=filtered_df["Date"].dt.year).groupby("Year")["Amount"].sum().reset_index()
