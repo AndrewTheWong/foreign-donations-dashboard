@@ -39,35 +39,8 @@ st.sidebar.markdown("### Credits")
 st.sidebar.caption("Built by **Andrew Wong** All rights reserved.")
 st.sidebar.markdown("📬 [Follow me on X @AndrewTheWong_](https://x.com/AndrewTheWong_)")
 
-
-# Hybrid color map: fixed for top donors, dynamic for others
-import matplotlib.pyplot as plt
-
-fixed_colors = {
-    "China": "#de2910",         # Red (flag)
-    "Qatar": "#8A1538",         # Maroon
-    "Saudi Arabia": "#006C35",  # Green
-    "Canada": "#ff0000",        # Red
-    "England": "#00247d",       # Blue
-    "South Korea": "#003478",   # Navy
-    "Japan": "#bc002d",         # Red
-    "India": "#ff9933",         # Saffron
-    "UAE": "#00732f",           # Green
-    "Germany": "#000000",       # Black
-}
-
-def get_country_color_map(countries):
-    cmap = plt.get_cmap("tab20")
-    dynamic_countries = [c for c in sorted(set(countries)) if c not in fixed_colors]
-    dynamic_colors = {
-        country: f"rgb{tuple(int(c*255) for c in cmap(i % cmap.N)[:3])}"
-        for i, country in enumerate(dynamic_countries)
-    }
-    return {**fixed_colors, **dynamic_colors}
-
+# Filter data
 filtered_df = df[(df["Date"].dt.year.between(start_year, end_year)) & (df["Country"].isin(selected_countries))]
-country_color_map = get_country_color_map(df['Country'])
-
 
 tab1, tab2, tab3 = st.tabs(["🏫 School Breakdown", "📊 Compare Schools", "🌍 Donations by Country"])
 
@@ -81,52 +54,8 @@ with tab1:
     formatted_table["Total Donations"] = formatted_table["Total Donations"].map("${:,.0f}".format)
     st.dataframe(formatted_table, use_container_width=True, hide_index=True)
     st.markdown("**Bar Chart:**")
-    school_data["Color"] = school_data["Country"].map(lambda c: country_color_map.get(c, "#999999"))
-    school_fig = px.bar(school_data, x="Country", y="Total Donations", title=f"Donations to {selected_school} by Country", color="Country", color_discrete_map=country_color_map, hover_data={"Total Donations": ":,.0f"})
+    school_fig = px.bar(school_data, x="Country", y="Total Donations", title=f"Donations to {selected_school} by Country", hover_data={"Total Donations": ":,.0f"})
     school_fig.update_layout(xaxis_tickangle=45)
-
-    # Add invisible scatter line for shadow legend entry
-    school_fig.add_trace(go.Scatter(
-        x=[None],
-        y=[None],
-        mode="lines",
-        line=dict(color="rgba(200,200,200,0.4)", width=10),
-        name="Total Donations (Reference)",
-        showlegend=True,
-        hoverinfo="skip"
-    ))
-    
-    
-    school_fig.update_layout(xaxis_tickangle=45)
-
-    # Add invisible scatter line for shadow legend entry
-    school_fig.add_trace(go.Scatter(
-        x=[None],
-        y=[None],
-        mode="lines",
-        line=dict(color="rgba(200,200,200,0.4)", width=10),
-        name="Total Donations (Reference)",
-        showlegend=True,
-        hoverinfo="skip"
-    ))
-    
-    
-
-    
-    
-    school_fig.update_layout(xaxis_tickangle=45)
-
-    # Add invisible scatter line for shadow legend entry
-    school_fig.add_trace(go.Scatter(
-        x=[None],
-        y=[None],
-        mode="lines",
-        line=dict(color="rgba(200,200,200,0.4)", width=10),
-        name="Total Donations (Reference)",
-        showlegend=True,
-        hoverinfo="skip"
-    ))
-    
     st.plotly_chart(school_fig, use_container_width=True)
     st.markdown("**Line Chart (Donations Over Time):**")
     school_trend = filtered_df[filtered_df["School"] == selected_school].assign(Year=filtered_df["Date"].dt.year).groupby("Year")["Amount"].sum().reset_index()
@@ -153,28 +82,28 @@ with tab2:
 
     chosen_schools = st.multiselect("Choose universities to compare", sorted(df["School"].unique()), default=top10_schools_list)
 
-    school_totals = filtered_df[filtered_df["School"].isin(chosen_schools)].groupby("School")["Amount"].sum().reset_index()
+    school_totals = df[df["School"].isin(chosen_schools)].groupby("School")["Amount"].sum().reset_index()
     country_breakdowns = filtered_df[(filtered_df["School"].isin(chosen_schools)) & (filtered_df["Country"].isin(selected_countries))].groupby(["School", "Country"])["Amount"].sum().reset_index()
 
-    
+    color_map = {
+        "CHINA": "#de2910", "QATAR": "#8A1538", "ENGLAND": "#00247d",
+        "SAUDI ARABIA": "#006C35", "CANADA": "#ff0000"
+    }
 
     sorted_schools = school_totals.sort_values("Amount", ascending=False)["School"].tolist()
     fig = go.Figure()
 
-
-    # Add background shadow rectangles for total donation reference
-    for i, school in enumerate(sorted_schools):
-        fig.add_shape(
-            type="rect",
-            x0=i - 0.4,
-            x1=i + 0.4,
-            y0=0,
-            y1=school_totals.set_index("School").loc[school]["Amount"],
-            line=dict(color="lightgray", width=1),
-            fillcolor="rgba(200, 200, 200, 0.1)",
-            layer="below"
-        )
-    
+    # Reference total bar
+    fig.add_trace(go.Bar(
+        x=sorted_schools,
+        y=school_totals.set_index("School").loc[sorted_schools]["Amount"],
+        name="Total Donations (Reference)",
+        marker_color="lightgray",
+        opacity=0.3,
+        hoverinfo="skip",
+        showlegend=True,
+        offsetgroup="reference"
+    ))
 
     # Maintain a tracker for the current top of the stack per school
     current_height = {school: 0 for school in sorted_schools}
@@ -189,7 +118,7 @@ with tab2:
                 x=[school],
                 y=[y_val],
                 name=row["Country"],
-                marker_color=country_color_map.get(row["Country"], "#999999"),
+                marker_color=color_map.get(row["Country"].upper(), None),
                 hovertemplate=f"{row['Country']}: $%{{y:,.0f}}<extra></extra>",
                 offsetgroup="schools",
                 base=base_val,
@@ -198,30 +127,14 @@ with tab2:
 
             current_height[school] += y_val  # update stack height
 
-    
-
-    
-
-
-    # Add invisible scatter line for shadow legend entry
-    fig.add_trace(go.Scatter(
-        x=[None],
-        y=[None],
-        mode="lines",
-        line=dict(color="rgba(200,200,200,0.4)", width=10),
-        name="Total Donations (Reference)",
-        showlegend=True,
-        hoverinfo="skip"
-    ))
-    
-fig.update_layout(
+    fig.update_layout(
         title="Foreign Donations by Country for Selected Schools",
         barmode="relative",
         xaxis_tickangle=45,
         height=600
     )
 
-st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True)
 
 # TAB 3
 with tab3:
