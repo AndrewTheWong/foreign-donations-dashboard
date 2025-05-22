@@ -39,8 +39,35 @@ st.sidebar.markdown("### Credits")
 st.sidebar.caption("Built by **Andrew Wong** All rights reserved.")
 st.sidebar.markdown("📬 [Follow me on X @AndrewTheWong_](https://x.com/AndrewTheWong_)")
 
-# Filter data
+
+# Hybrid color map: fixed for top donors, dynamic for others
+import matplotlib.pyplot as plt
+
+fixed_colors = {
+    "China": "#de2910",         # Red (flag)
+    "Qatar": "#8A1538",         # Maroon
+    "Saudi Arabia": "#006C35",  # Green
+    "Canada": "#ff0000",        # Red
+    "England": "#00247d",       # Blue
+    "South Korea": "#003478",   # Navy
+    "Japan": "#bc002d",         # Red
+    "India": "#ff9933",         # Saffron
+    "UAE": "#00732f",           # Green
+    "Germany": "#000000",       # Black
+}
+
+def get_country_color_map(countries):
+    cmap = plt.get_cmap("tab20")
+    dynamic_countries = [c for c in sorted(set(countries)) if c not in fixed_colors]
+    dynamic_colors = {
+        country: f"rgb{tuple(int(c*255) for c in cmap(i % cmap.N)[:3])}"
+        for i, country in enumerate(dynamic_countries)
+    }
+    return {**fixed_colors, **dynamic_colors}
+
 filtered_df = df[(df["Date"].dt.year.between(start_year, end_year)) & (df["Country"].isin(selected_countries))]
+country_color_map = get_country_color_map(df['Country'])
+
 
 tab1, tab2, tab3 = st.tabs(["🏫 School Breakdown", "📊 Compare Schools", "🌍 Donations by Country"])
 
@@ -82,7 +109,7 @@ with tab2:
 
     chosen_schools = st.multiselect("Choose universities to compare", sorted(df["School"].unique()), default=top10_schools_list)
 
-    school_totals = df[df["School"].isin(chosen_schools)].groupby("School")["Amount"].sum().reset_index()
+    school_totals = filtered_df[filtered_df["School"].isin(chosen_schools)].groupby("School")["Amount"].sum().reset_index()
     country_breakdowns = filtered_df[(filtered_df["School"].isin(chosen_schools)) & (filtered_df["Country"].isin(selected_countries))].groupby(["School", "Country"])["Amount"].sum().reset_index()
 
     color_map = {
@@ -118,7 +145,7 @@ with tab2:
                 x=[school],
                 y=[y_val],
                 name=row["Country"],
-                marker_color=color_map.get(row["Country"].upper(), None),
+                marker_color=country_color_map.get(row["Country"], "#999999"),
                 hovertemplate=f"{row['Country']}: $%{{y:,.0f}}<extra></extra>",
                 offsetgroup="schools",
                 base=base_val,
