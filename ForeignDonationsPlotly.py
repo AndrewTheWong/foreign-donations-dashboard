@@ -74,6 +74,7 @@ with tab1:
         st.info("No contract/gift type data available.")
 
 # TAB 2
+
 with tab2:
     st.subheader("🏛️ Top 10 US Universities by Total Foreign Donations")
 
@@ -90,19 +91,16 @@ with tab2:
         "SAUDI ARABIA": "#006C35", "CANADA": "#ff0000"
     }
 
-# Assign consistent default colors to other countries not in color_map
-from itertools import cycle
-
-default_colors = cycle(px.colors.qualitative.Set3)
-for country in country_breakdowns["Country"].unique():
-    if country.upper() not in color_map:
-        color_map[country.upper()] = next(default_colors)
-
+    # Assign consistent default colors to other countries not in color_map
+    from itertools import cycle
+    default_colors = cycle(px.colors.qualitative.Set3)
+    for country in country_breakdowns["Country"].unique():
+        if country.upper() not in color_map:
+            color_map[country.upper()] = next(default_colors)
 
     sorted_schools = school_totals.sort_values("Amount", ascending=False)["School"].tolist()
     fig = go.Figure()
 
-    # Reference total bar
     fig.add_trace(go.Bar(
         x=sorted_schools,
         y=school_totals.set_index("School").loc[sorted_schools]["Amount"],
@@ -114,7 +112,6 @@ for country in country_breakdowns["Country"].unique():
         offsetgroup="reference"
     ))
 
-    # Maintain a tracker for the current top of the stack per school
     current_height = {school: 0 for school in sorted_schools}
 
     for school in sorted_schools:
@@ -127,14 +124,14 @@ for country in country_breakdowns["Country"].unique():
                 x=[school],
                 y=[y_val],
                 name=row["Country"],
-                marker_color=color_map.get(row["Country"].upper(), None),
+                marker_color=color_map.get(row["Country"].upper(), "#888"),
                 hovertemplate=f"{row['Country']}: $%{{y:,.0f}}<extra></extra>",
                 offsetgroup="schools",
                 base=base_val,
                 showlegend=row["Country"] not in [trace.name for trace in fig.data]
             ))
 
-            current_height[school] += y_val  # update stack height
+            current_height[school] += y_val
 
     fig.update_layout(
         title="Foreign Donations by Country for Selected Schools",
@@ -144,8 +141,6 @@ for country in country_breakdowns["Country"].unique():
     )
 
     st.plotly_chart(fig, use_container_width=True)
-
-# TAB 3
 with tab3:
     st.markdown("### 🌍 Total Foreign Donations by Country (Ordered Table)")
     country_table = filtered_df.groupby("Country")["Amount"].sum().sort_values(ascending=False).reset_index().rename(columns={"Amount": "Total Donations"})
