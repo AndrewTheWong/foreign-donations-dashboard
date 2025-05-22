@@ -107,7 +107,7 @@ with tab1:
 
     
     # Add invisible scatter line for shadow legend entry
-    fig.add_trace(go.Scatter(
+    school_fig.add_trace(go.Scatter(
         x=[None],
         y=[None],
         mode="lines",
