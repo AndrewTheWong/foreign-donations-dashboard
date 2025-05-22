@@ -32,8 +32,7 @@ if st.sidebar.button("Top 5 Countries"):
 if st.sidebar.button("Clear Selection"):
     st.session_state.selected_countries = []
 
-selected_countries = st.sidebar.multiselect("Countries:", options=all_countries, key="selected_countries")
-
+selected_countries = st.sidebar.multiselect("Countries:", options=all_countries, default=st.session_state.selected_countries, key="selected_countries")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### Credits")
@@ -83,7 +82,19 @@ with tab1:
     st.dataframe(formatted_table, use_container_width=True, hide_index=True)
     st.markdown("**Bar Chart:**")
     school_fig = px.bar(school_data, x="Country", y="Total Donations", title=f"Donations to {selected_school} by Country", hover_data={"Total Donations": ":,.0f"})
-    school_fig.update_layout(xaxis_tickangle=45)
+    school_
+    # Add dummy trace for shadow legend entry
+    fig.add_trace(go.Bar(
+        x=[None],
+        y=[None],
+        name="Total Donations (Reference)",
+        marker=dict(color="rgba(200, 200, 200, 0.2)", line=dict(color="lightgray")),
+        showlegend=True,
+        hoverinfo='skip'
+    ))
+    
+
+fig.update_layout(xaxis_tickangle=45)
     st.plotly_chart(school_fig, use_container_width=True)
     st.markdown("**Line Chart (Donations Over Time):**")
     school_trend = filtered_df[filtered_df["School"] == selected_school].assign(Year=filtered_df["Date"].dt.year).groupby("Year")["Amount"].sum().reset_index()
@@ -121,17 +132,20 @@ with tab2:
     sorted_schools = school_totals.sort_values("Amount", ascending=False)["School"].tolist()
     fig = go.Figure()
 
-    # Reference total bar
-    fig.add_trace(go.Bar(
-        x=sorted_schools,
-        y=school_totals.set_index("School").loc[sorted_schools]["Amount"],
-        name="Total Donations (Reference)",
-        marker_color="lightgray",
-        opacity=0.3,
-        hoverinfo="skip",
-        showlegend=True,
-        offsetgroup="reference"
-    ))
+
+    # Add background shadow rectangles for total donation reference
+    for i, school in enumerate(sorted_schools):
+        fig.add_shape(
+            type="rect",
+            x0=i - 0.4,
+            x1=i + 0.4,
+            y0=0,
+            y1=school_totals.set_index("School").loc[school]["Amount"],
+            line=dict(color="lightgray", width=1),
+            fillcolor="rgba(200, 200, 200, 0.1)",
+            layer="below"
+        )
+    
 
     # Maintain a tracker for the current top of the stack per school
     current_height = {school: 0 for school in sorted_schools}
@@ -155,7 +169,19 @@ with tab2:
 
             current_height[school] += y_val  # update stack height
 
-    fig.update_layout(
+    
+    # Add dummy trace for shadow legend entry
+    fig.add_trace(go.Bar(
+        x=[None],
+        y=[None],
+        name="Total Donations (Reference)",
+        marker=dict(color="rgba(200, 200, 200, 0.2)", line=dict(color="lightgray")),
+        showlegend=True,
+        hoverinfo='skip'
+    ))
+    
+
+fig.update_layout(
         title="Foreign Donations by Country for Selected Schools",
         barmode="relative",
         xaxis_tickangle=45,
