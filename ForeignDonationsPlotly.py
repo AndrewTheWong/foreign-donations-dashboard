@@ -32,7 +32,8 @@ if st.sidebar.button("Top 5 Countries"):
 if st.sidebar.button("Clear Selection"):
     st.session_state.selected_countries = []
 
-selected_countries = st.sidebar.multiselect("Countries:", options=all_countries, default=st.session_state.selected_countries, key="selected_countries")
+selected_countries = st.sidebar.multiselect("Countries:", options=all_countries, key="selected_countries")
+
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### Credits")
