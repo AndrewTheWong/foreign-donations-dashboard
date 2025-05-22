@@ -82,7 +82,7 @@ with tab1:
     st.dataframe(formatted_table, use_container_width=True, hide_index=True)
     st.markdown("**Bar Chart:**")
     school_fig = px.bar(school_data, x="Country", y="Total Donations", title=f"Donations to {selected_school} by Country", hover_data={"Total Donations": ":,.0f"})
-    school_
+    school_fig.update_layout(xaxis_tickangle=45)
     # Add invisible scatter line for shadow legend entry
     fig.add_trace(go.Scatter(
         x=[None],
