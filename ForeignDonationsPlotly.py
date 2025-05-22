@@ -94,7 +94,7 @@ with tab1:
     ))
     
 
-fig.update_layout(xaxis_tickangle=45)
+    fig.update_layout(xaxis_tickangle=45)
     st.plotly_chart(school_fig, use_container_width=True)
     st.markdown("**Line Chart (Donations Over Time):**")
     school_trend = filtered_df[filtered_df["School"] == selected_school].assign(Year=filtered_df["Date"].dt.year).groupby("Year")["Amount"].sum().reset_index()
